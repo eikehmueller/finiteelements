@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from basis_functions import LinearBasis2d, PolynomialBasis2d
+from basisfunctions2d import LinearBasis2d, PolynomialBasis2d
 
 
 @pytest.fixture

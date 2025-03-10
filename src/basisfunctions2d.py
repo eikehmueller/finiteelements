@@ -66,14 +66,22 @@ class Basis2d(ABC):
     def evaluate(self, xi):
         """Evaluate all basis function at a point inside the reference cell
 
-        :arg xi: point xi=(x,y) at which the basis functions are to be evaluated
+        Returns a vector of length ndof with the evaluation of all three basis function or
+        an array of shape (npoints,ndof) if xi describes a list of points.
+
+        :arg xi: point xi=(x,y) at which the basis functions are to be evaluated.
+                 xi can also be an array of shape (npoints,2).
         """
 
     @abstractmethod
     def evaluate_gradient(self, xi):
         """Evaluate the gradient of all basis functions at a point inside the reference cell
 
-        :arg xi: point xi=(x,y) at which the gradient of the basis functions are to be evaluated
+        Returns an vector of shape (ndof,2) with the evaluation of the gradients of all three basis
+        functions or an array of shape (npoints,ndof,2) if xi describes a list of points.
+
+        :arg xi: point xi=(x,y) at which the gradients of the basis functions are to be evaluated.
+                 xi can also be an array of shape (npoints,2).
         """
 
     @property
@@ -127,17 +135,38 @@ class LinearBasis2d(Basis2d):
     def evaluate(self, xi):
         """Evaluate all basis functions at a point inside the reference cell
 
-        :arg xi: point xi=(x,y) at which the basis functios are to be evaluated
+        Returns a vector of length 3 with the evaluation of all three basis function or
+        an array of shape (npoints,3) if xi describes a list of points.
+
+        :arg xi: point xi=(x,y) at which the basis functions are to be evaluated.
+                 xi can also be an array of shape (npoints,2).
         """
-        x, y = xi
-        return np.asarray([1 - x - y, x, y])
+        assert xi.ndim in (1, 2)
+        if xi.ndim == 1:
+            x, y = xi
+            return np.asarray([1 - x - y, x, y])
+        else:
+            npoints = xi.shape[0]
+            result = np.empty((npoints, 3))
+            for j in range(npoints):
+                x, y = xi[j, :]
+                result[j, :] = np.asarray([1 - x - y, x, y])
 
     def evaluate_gradient(self, xi):
         """Evaluate the gradients of all basis function at a point inside the reference cell
 
-        :arg xi: point xi=(x,y) at which the gradient of the basis functions are to be evaluated
+        Returns an vector of shape (3,2) with the evaluation of the gradients of all three basis
+        functions or an array of shape (npoints,3,2) if xi describes a list of points.
+
+        :arg xi: point xi=(x,y) at which the gradients of the basis functions are to be evaluated.
+                 xi can also be an array of shape (npoints,2).
         """
-        return np.asarray([[-1, -1], [1, 0], [0, 1]])
+        assert xi.ndim in (1, 2)
+        if xi.ndim == 1:
+            return np.asarray([[-1, -1], [1, 0], [0, 1]])
+        else:
+            npoints = xi.shape[0]
+            np.asarray([[[-1, -1], [1, 0], [0, 1]]]).repeat(npoints, axis=0)
 
 
 class PolynomialBasis2d(Basis2d):
@@ -221,29 +250,63 @@ class PolynomialBasis2d(Basis2d):
     def evaluate(self, xi):
         """Evaluate the all basis functions at a point inside the reference cell
 
-        :arg k: index of basis function
-        :arg xi: point xi=(x,y) at which the basis functions are to be evaluated
+        Returns a vector of length ndof with the evaluation of all three basis function or
+        an array of shape (npoints,ndof) if xi describes a list of points.
+
+        :arg xi: point xi=(x,y) at which the basis functions are to be evaluated.
+                 xi can also be an array of shape (npoints,2).
         """
-        x, y = xi
-        value = np.zeros(self.ndof)
-        for k in range(self.ndof):
-            for coefficient, (a, b) in zip(self._coefficients[:, k], self._powers):
-                value[k] += coefficient * x**a * y**b
+        assert xi.ndim in (1, 2)
+        if xi.ndim == 1:
+            x, y = xi
+            value = np.zeros(self.ndof)
+            for k in range(self.ndof):
+                for coefficient, (a, b) in zip(self._coefficients[:, k], self._powers):
+                    value[k] += coefficient * x**a * y**b
+        else:
+            npoints = xi.shape[0]
+            value = np.zeros(npoints, self.ndof)
+            for j in range(npoints):
+                x, y = xi[j, :]
+                for k in range(self.ndof):
+                    for coefficient, (a, b) in zip(
+                        self._coefficients[:, k], self._powers
+                    ):
+                        value[j, k] += coefficient * x**a * y**b
         return value
 
     def evaluate_gradient(self, xi):
         """Evaluate the gradients of all basis functions at a point inside the reference cell
 
-        :arg xi: point xi=(x,y) at which the gradient of the basis functions are to be evaluated
+        Returns an vector of shape (ndof,2) with the evaluation of the gradients of all three basis
+        functions or an array of shape (npoints,ndof,2) if xi describes a list of points.
+
+        :arg xi: point xi=(x,y) at which the gradients of the basis functions are to be evaluated.
+                 xi can also be an array of shape (npoints,2).
         """
-        x, y = xi
-        grad = np.zeros((self.ndof, 2))
-        for k in range(self.ndof):
-            for coefficient, (a, b) in zip(self._coefficients[:, k], self._powers):
-                if a > 0:
-                    grad[k, 0] += coefficient * a * x ** (a - 1) * y**b
-                if b > 0:
-                    grad[k, 1] += coefficient * b * x**a * y ** (b - 1)
+        assert xi.ndim in (1, 2)
+        if xi.ndim == 1:
+            x, y = xi
+            grad = np.zeros((self.ndof, 2))
+            for k in range(self.ndof):
+                for coefficient, (a, b) in zip(self._coefficients[:, k], self._powers):
+                    if a > 0:
+                        grad[k, 0] += coefficient * a * x ** (a - 1) * y**b
+                    if b > 0:
+                        grad[k, 1] += coefficient * b * x**a * y ** (b - 1)
+        else:
+            npoints = xi.shape[0]
+            grad = np.zeros((npoints, self.ndof, 2))
+            for j in range(npoints):
+                x, y = xi[j, :]
+                for k in range(self.ndof):
+                    for coefficient, (a, b) in zip(
+                        self._coefficients[:, k], self._powers
+                    ):
+                        if a > 0:
+                            grad[j, k, 0] += coefficient * a * x ** (a - 1) * y**b
+                        if b > 0:
+                            grad[j, k, 1] += coefficient * b * x**a * y ** (b - 1)
         return grad
 
 

@@ -1,5 +1,5 @@
 import numpy as np
-from basis_functions import LinearBasis2d
+from basisfunctions2d import LinearBasis2d
 
 
 def test_linear_basis2d_nodal_evaluations():
