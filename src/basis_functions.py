@@ -1,0 +1,258 @@
+"""Basis functions"""
+
+from abc import ABC, abstractmethod
+import numpy as np
+
+
+class Basis2d(ABC):
+    """Base class for two-dimensional basis functions on the reference triangle
+
+    The vertices and facets and of the reference triangle are arranged as in the following
+    diagram:
+
+        V 2
+         *
+         ! .
+         !  .
+         !    .
+         !     . F 0
+     F 1 !      .
+         !        .
+         !         .
+         !          .
+         *-----------*
+     V 0       F 2      V 1
+
+     Facet unknowns are arranged in a counter-clockwise order.
+    """
+
+    def __init__(self):
+        """Initialise new instance"""
+        self._cell2dof_map = []
+        self._facet2dof_map = [[], [], []]
+        self._vertex2dof_map = [[], [], []]
+        self._ndof = 0
+
+    @property
+    def cell2dof(self):
+        """Indices of unknowns associated with the interior of the reference cell
+
+        Return a list of indices. The variable _cell2dof_map needs to be constructed in
+        derived classes.
+        """
+        return self._cell2dof_map
+
+    @property
+    def facet2dof(self):
+        """Indices of unknowns associated with the the three facets of the reference cell
+
+        Return a nested list L of indices such that the list L[F] contains the indices of
+        all dofs associated with facet F. The dofs are arranged in a counter-clockwise order
+        on the facets. The variable _facet2dof_map needs to be constructed in derived classes.
+        """
+        return self._facet2dof_map
+
+    @property
+    def vertex2dof(self):
+        """Indices of unknowns associated with the the three vertices of the reference cell
+
+        Return a nested list L of indices such that the list L[V] contains the indices of
+        all dofs associated with vertex V. The variable _vertex2dof_map needs to be
+        constructed in derived classes.
+        """
+        return self._vertex2dof_map
+
+    @abstractmethod
+    def evaluate(self, xi):
+        """Evaluate all basis function at a point inside the reference cell
+
+        :arg xi: point xi=(x,y) at which the basis functions are to be evaluated
+        """
+
+    @abstractmethod
+    def evaluate_gradient(self, xi):
+        """Evaluate the gradient of all basis functions at a point inside the reference cell
+
+        :arg xi: point xi=(x,y) at which the gradient of the basis functions are to be evaluated
+        """
+
+    @property
+    def ndof(self):
+        """Return number of unknowns
+
+        Need to set the variable _ndof in derived classes
+        """
+        return self._ndof
+
+
+class LinearBasis2d(Basis2d):
+    """Linear basis functions in two dimensions
+
+    There are 3 basis functions, which represent bi-variant linear functions on the reference
+    triangle:
+
+        phi_0(x,y) = 1 - x - y
+        phi_1(x,y) = x
+        phi_2(x,y) = y
+
+    The dofs are function evaluations are the nodal points which coincide with the
+    vertices, as shown in the following figure.
+
+    Arrangement of the 3 unknowns on reference triangle:
+
+    V 2
+        2
+        ! .
+        !  .
+        !   .
+        !     . F 0
+    F 1 !      .
+        !       .
+        !         .
+        !          .
+        0-----------1
+    V 0       F 2      V 1
+
+
+    """
+
+    def __init__(self):
+        """Initialise new instance"""
+        super().__init__()
+        self._ndof = 3
+        self._cell2dof_map = []
+        self._facet2dof_map = []
+        self._vertex2dof_map = [[0], [1], [2]]
+
+    def evaluate(self, xi):
+        """Evaluate all basis functions at a point inside the reference cell
+
+        :arg xi: point xi=(x,y) at which the basis functios are to be evaluated
+        """
+        x, y = xi
+        return np.asarray([1 - x - y, x, y])
+
+    def evaluate_gradient(self, xi):
+        """Evaluate the gradients of all basis function at a point inside the reference cell
+
+        :arg xi: point xi=(x,y) at which the gradient of the basis functions are to be evaluated
+        """
+        return np.asarray([[-1, -1], [1, 0], [0, 1]])
+
+
+class PolynomialBasis2d(Basis2d):
+    """Nodal polynomial basis functions of arbitrary degree p in two dimensions
+
+    There are (p+1)*(p+2)/2 basis functions, which represent bi-variate polynomials P_p(x,y)
+    of degree p on the reference triangle. Each basis function is a linear combination of
+    monomials x^a*y^b with a+b <= p. The dofs are function evaluations are the nodal points
+    (j*h,k*h) where h=1/p, as shown in the following figure.
+
+    Arrangement of the 10 unknowns on reference triangle for p=3:
+
+    V 2
+        9
+        ! .
+        !  .
+        7   8
+        !     . F 0
+    F 1 !      .
+        4   5   6
+        !         .
+        !          .
+        0---1---2---3
+    V 0       F 2      V 1
+
+
+    """
+
+    def __init__(self, degree):
+        """Initialise new instance
+
+        :arg p: polynomial degree p
+        """
+        assert degree > 0, "polynomial degree must be >= 1"
+        super().__init__()
+        self._degree = degree
+        # List with powers
+        self._powers = []
+        # List with nodal points
+        self._nodal_points = []
+        # Spacing of nodal points
+        h = 1 / self._degree
+
+        c = 0
+        for b in range(self._degree + 1):
+            for a in range(self._degree + 1 - b):
+                if a == 0 and b == 0:
+                    self._vertex2dof_map[0].append(c)
+                elif a == self._degree and b == 0:
+                    self._vertex2dof_map[1].append(c)
+                elif a == 0 and b == self._degree:
+                    self._vertex2dof_map[2].append(c)
+                elif a == 0:
+                    self._facet2dof_map[1].insert(0, c)
+                elif b == 0:
+                    self._facet2dof_map[2].append(c)
+                elif a + b == self._degree:
+                    self._facet2dof_map[0].append(c)
+                else:
+                    self._cell2dof_map.append(c)
+                self._powers.append([a, b])
+                self._nodal_points.append([a * h, b * h])
+                c += 1
+        # Construct the matrix A such that
+        #    A_{row,col} = x_j^a*y_k^b
+        # where the row corresponds to the index of the nodal point (x_j,x_k) and
+        # the column to the power (a,b) that the nodal point is raised to
+        A = np.empty([len(self._nodal_points), len(self._powers)])
+        for row, (x, y) in enumerate(self._nodal_points):
+            for col, (a, b) in enumerate(self._powers):
+                A[row, col] = x**a * y**b
+        # Solve A.C = Id for the coefficient matrix C. The k-th column of C contains
+        # the polynomial coefficients for the k-th basis function
+        self._coefficients = np.linalg.inv(A)
+        self._ndof = ((self._degree + 1) * (self._degree + 2)) // 2
+
+    @property
+    def degree(self):
+        return self._degree
+
+    def evaluate(self, xi):
+        """Evaluate the all basis functions at a point inside the reference cell
+
+        :arg k: index of basis function
+        :arg xi: point xi=(x,y) at which the basis functions are to be evaluated
+        """
+        x, y = xi
+        value = np.zeros(self.ndof)
+        for k in range(self.ndof):
+            for coefficient, (a, b) in zip(self._coefficients[:, k], self._powers):
+                value[k] += coefficient * x**a * y**b
+        return value
+
+    def evaluate_gradient(self, xi):
+        """Evaluate the gradients of all basis functions at a point inside the reference cell
+
+        :arg xi: point xi=(x,y) at which the gradient of the basis functions are to be evaluated
+        """
+        x, y = xi
+        grad = np.zeros((self.ndof, 2))
+        for k in range(self.ndof):
+            for coefficient, (a, b) in zip(self._coefficients[:, k], self._powers):
+                if a > 0:
+                    grad[k, 0] += coefficient * a * x ** (a - 1) * y**b
+                if b > 0:
+                    grad[k, 1] += coefficient * b * x**a * y ** (b - 1)
+        return grad
+
+
+if __name__ == "__main__":
+    basis = PolynomialBasis2d(4)
+
+    p = np.asarray([0.25, 0.25])
+    print("cell2dof map", basis._cell2dof_map)
+    print("vertex2dof map", basis._vertex2dof_map)
+    print("facet2dof map", basis._facet2dof_map)
+    print(basis.evaluate(3, p))
+    print(basis.evaluate_gradient(0, p))
