@@ -14,7 +14,7 @@ def test_quadrature2d_weight_sum(degree):
 def test_equadrature2d_quartic_integration():
     """Check that the function x^2*(1-x)^2*y^2*(1-y)^2 is integrated exactly"""
     poly = lambda xi: xi[0] ** 2 * (1 - xi[0]) ** 2 * xi[1] ** 2 * (1 - xi[1]) ** 2
-    quadrature = GaussLegendreQuadrature2d(4)
+    quadrature = GaussLegendreQuadrature2d(3)
     integral = 0
     for xi, weight in zip(quadrature.xi, quadrature.weights):
         integral += poly(xi) * weight
