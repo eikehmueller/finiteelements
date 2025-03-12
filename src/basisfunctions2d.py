@@ -92,6 +92,21 @@ class Basis2d(ABC):
         """
         return self._ndof
 
+    @property
+    def ndof_per_cell(self):
+        """Return number of unknowns associated with the cell"""
+        return len(self._cell2dof_map)
+
+    @property
+    def ndof_per_facet(self):
+        """Return number of unknowns associated with each facet"""
+        return len(self._facet2dof_map[0])
+
+    @property
+    def ndof_per_vertex(self):
+        """Return number of unknowns associated with each vertex"""
+        return len(self._vertex2dof_map[0])
+
 
 class LinearBasis2d(Basis2d):
     """Linear basis functions in two dimensions
