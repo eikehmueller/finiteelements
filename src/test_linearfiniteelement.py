@@ -1,5 +1,5 @@
 import numpy as np
-from finiteelement2d import LinearFiniteElement2d
+from finiteelement import LinearFiniteElement2d
 
 
 def test_linear_finiteelement2d_nodal_evaluations():

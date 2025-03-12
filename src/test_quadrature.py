@@ -1,4 +1,4 @@
-from quadrature2d import GaussLegendreQuadrature2d
+from quadrature import GaussLegendreQuadrature2d
 import pytest
 import numpy as np
 

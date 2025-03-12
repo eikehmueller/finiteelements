@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from finiteelement2d import LinearFiniteElement2d, PolynomialFiniteElement2d
+from finiteelement import LinearFiniteElement2d, PolynomialFiniteElement2d
 
 
 @pytest.fixture
