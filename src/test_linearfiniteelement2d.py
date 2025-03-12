@@ -1,10 +1,10 @@
 import numpy as np
-from basisfunctions2d import LinearBasis2d
+from finiteelement2d import LinearFiniteElement2d
 
 
-def test_linear_basis2d_nodal_evaluations():
+def test_linear_finiteelement2d_nodal_evaluations():
     """Check that phi_k(xi_j) = delta_{j,k} for the linear basis functions"""
-    basis = LinearBasis2d()
+    basis = LinearFiniteElement2d()
     xi = np.asarray([[0, 0], [1, 0], [0, 1]])
     evaluations = np.empty((3, 3))
     for j in range(3):
@@ -15,19 +15,19 @@ def test_linear_basis2d_nodal_evaluations():
     )
 
 
-def test_linear_basis2d_cell2dof_map():
+def test_linear_finiteelement2d_cell2dof_map():
     """Check that the cell2dof map is correct for linear basis functions"""
-    basis = LinearBasis2d()
+    basis = LinearFiniteElement2d()
     assert basis.cell2dof == []
 
 
-def test_linear_basis2d_facet2dof_map():
+def test_linear_finiteelement2d_facet2dof_map():
     """Check that the facet2dof map is correct for linear basis functions"""
-    basis = LinearBasis2d()
+    basis = LinearFiniteElement2d()
     assert basis.facet2dof == []
 
 
-def test_linear_basis2d_vertex2dof_map():
+def test_linear_finiteelement2d_vertex2dof_map():
     """Check that the vertex2dof map is correct for linear basis functions"""
-    basis = LinearBasis2d()
+    basis = LinearFiniteElement2d()
     assert basis.vertex2dof == [[0], [1], [2]]

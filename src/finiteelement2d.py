@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 
-class Basis2d(ABC):
-    """Base class for two-dimensional basis functions on the reference triangle
+class FiniteElement2d(ABC):
+    """Base class for two-dimensional finite element basis functions on the reference triangle
 
     The vertices and facets and of the reference triangle are arranged as in the following
     diagram:
@@ -66,7 +66,7 @@ class Basis2d(ABC):
     def evaluate(self, xi):
         """Evaluate all basis function at a point inside the reference cell
 
-        Returns a vector of length ndof with the evaluation of all three basis function or
+        Returns a vector of length ndof with the evaluation of all three basis functions or
         an array of shape (npoints,ndof) if xi describes a list of points.
 
         :arg xi: point xi=(x,y) at which the basis functions are to be evaluated.
@@ -108,8 +108,8 @@ class Basis2d(ABC):
         return len(self._vertex2dof_map[0])
 
 
-class LinearBasis2d(Basis2d):
-    """Linear basis functions in two dimensions
+class LinearFiniteElement2d(FiniteElement2d):
+    """Linear finite element basis functions in two dimensions
 
     There are 3 basis functions, which represent bi-variant linear functions on the reference
     triangle:
@@ -184,8 +184,8 @@ class LinearBasis2d(Basis2d):
             np.asarray([[[-1, -1], [1, 0], [0, 1]]]).repeat(npoints, axis=0)
 
 
-class PolynomialBasis2d(Basis2d):
-    """Nodal polynomial basis functions of arbitrary degree p in two dimensions
+class PolynomialFiniteElement2d(FiniteElement2d):
+    """Nodal polynomial finite element basis functions of arbitrary degree p in two dimensions
 
     There are (p+1)*(p+2)/2 basis functions, which represent bi-variate polynomials P_p(x,y)
     of degree p on the reference triangle. Each basis function is a linear combination of
@@ -326,11 +326,11 @@ class PolynomialBasis2d(Basis2d):
 
 
 if __name__ == "__main__":
-    basis = PolynomialBasis2d(4)
+    finite_element = PolynomialFiniteElement2d(4)
 
     p = np.asarray([0.25, 0.25])
-    print("cell2dof map", basis._cell2dof_map)
-    print("vertex2dof map", basis._vertex2dof_map)
-    print("facet2dof map", basis._facet2dof_map)
-    print(basis.evaluate(3, p))
-    print(basis.evaluate_gradient(0, p))
+    print("cell2dof map", finite_element._cell2dof_map)
+    print("vertex2dof map", finite_element._vertex2dof_map)
+    print("facet2dof map", finite_element._facet2dof_map)
+    print(finite_element.evaluate(3, p))
+    print(finite_element.evaluate_gradient(0, p))

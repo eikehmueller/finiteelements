@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from basisfunctions2d import LinearBasis2d, PolynomialBasis2d
+from finiteelement2d import LinearFiniteElement2d, PolynomialFiniteElement2d
 
 
 @pytest.fixture
@@ -9,9 +9,9 @@ def rng():
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
-def test_polynomial_basis2d_nodal_evaluations(degree):
+def test_polynomial_finiteelement2d_nodal_evaluations(degree):
     """Check that phi_k(xi_j) = delta_{j,k} for the linear basis functions"""
-    basis = PolynomialBasis2d(degree)
+    basis = PolynomialFiniteElement2d(degree)
     xi = []
     h = 1 / degree
     for b in range(degree + 1):
@@ -28,23 +28,23 @@ def test_polynomial_basis2d_nodal_evaluations(degree):
     )
 
 
-def test_polynomial_basis2d_linear(rng):
+def test_polynomial_finiteelement2d_linear(rng):
     """Check that evaluation of polynomial basis functions of degree 1 give same
     result as linear basis functions"""
 
-    basis_lin = LinearBasis2d()
-    basis_poly = PolynomialBasis2d(1)
+    basis_lin = LinearFiniteElement2d()
+    basis_poly = PolynomialFiniteElement2d(1)
     nsamples = 32
     xi = rng.uniform(size=(nsamples, 2))
     for j in range(nsamples):
         assert np.allclose(basis_lin.evaluate(xi[j, :]), basis_poly.evaluate(xi[j, :]))
 
 
-def test_polynomial_basis2d_linear_gradient(rng):
+def test_polynomial_finiteelement2d_linear_gradient(rng):
     """Check that gradient evaluation of polynomial basis functions of degree 1 give same
     result as linear basis functions"""
-    basis_lin = LinearBasis2d()
-    basis_poly = PolynomialBasis2d(1)
+    basis_lin = LinearFiniteElement2d()
+    basis_poly = PolynomialFiniteElement2d(1)
     nsamples = 32
     xi = rng.uniform(size=(nsamples, 2))
     for j in range(nsamples):
@@ -54,19 +54,19 @@ def test_polynomial_basis2d_linear_gradient(rng):
         )
 
 
-def test_polynomial_basis2d_cell2dof_map():
+def test_polynomial_finiteelement2d_cell2dof_map():
     """Check that the cell2dof map is correct for p=4 basis functions"""
-    basis = PolynomialBasis2d(4)
+    basis = PolynomialFiniteElement2d(4)
     assert basis.cell2dof == [6, 7, 10]
 
 
-def test_polynomial_basis2d_facet2dof_map():
+def test_polynomial_finiteelement2d_facet2dof_map():
     """Check that the facet2dof map is correct for p=4 basis functions"""
-    basis = PolynomialBasis2d(4)
+    basis = PolynomialFiniteElement2d(4)
     assert basis.facet2dof == [[8, 11, 13], [12, 9, 5], [1, 2, 3]]
 
 
-def test_polynomial_basis2d_vertex2dof_map():
+def test_polynomial_finiteelement2d_vertex2dof_map():
     """Check that the vertex2dof map is correct for p=4 basis functions"""
-    basis = PolynomialBasis2d(4)
+    basis = PolynomialFiniteElement2d(4)
     assert basis.vertex2dof == [[0], [4], [14]]
