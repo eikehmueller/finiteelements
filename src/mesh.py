@@ -2,6 +2,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from abc import ABC, abstractmethod
+from finiteelement import LinearFiniteElement2d
+from functionspace import FunctionSpace
+from function import Function
 
 
 class Mesh2d(ABC):
@@ -34,9 +37,35 @@ class Mesh2d(ABC):
     def nvertices(self):
         return self._vertices.shape[0]
 
+    def initialise_coordinates(self):
+        _coord_fs = FunctionSpace(self, LinearFiniteElement2d())
+        self.coordinates_x = Function(_coord_fs)
+        self.coordinates_y = Function(_coord_fs)
+        self.coordinates_x.data[:] = self.vertices[:, 0]
+        self.coordinates_y.data[:] = self.vertices[:, 1]
+
+    def jacobian(self, cell, xi):
+        """Calculate Jacobian in a given cell for quadrature points in reference triangle"""
+        fs_x = self.coordinates_x.functionspace
+        fs_y = self.coordinates_y.functionspace
+        element_x = fs_x.finiteelement
+        element_y = fs_y.finiteelement
+        grad_B_x = element_x.evaluate_gradient(xi)
+        grad_B_y = element_y.evaluate_gradient(xi)
+        jacobian = np.zeros((2, 2))
+        for j in range(element_x.ndof):
+            jacobian[0, :] += (
+                self.coordinates_x.data[fs_x.local2global(cell, j)] * grad_B_x[j, :]
+            )
+            jacobian[1, :] += (
+                self.coordinates_y.data[fs_y.local2global(cell, j)] * grad_B_y[j, :]
+            )
+        return jacobian
+
     def refine(self, nref=1):
         for _ in range(nref):
             self._refine()
+        self.initialise_coordinates()
 
     def _refine(self):
         # Pointer to current vertex
@@ -145,11 +174,11 @@ class Mesh2d(ABC):
             )
         # cells
         for cell in range(self.ncells):
-            p = np.empty((4, 2))
+            p = np.zeros((4, 3))
             for j, facet in enumerate(self.cell2facet[cell]):
-                p[j, :] = np.asarray(self.vertices[self.facet2vertex[facet][0]])
+                p[j, :2] = np.asarray(self.vertices[self.facet2vertex[facet][0]])
             p[-1, :] = p[0, :]
-            orientation = np.cross(p[1, :] - p[0, :], p[2, :] - p[1, :])
+            orientation = np.cross(p[1, :] - p[0, :], p[2, :] - p[1, :])[2]
             orientation /= np.abs(orientation)
             m = np.mean(p[:-1, :], axis=0)
             rho = 0.8
@@ -191,9 +220,15 @@ class RectangleMesh(Mesh2d):
         return self._Ly
 
 
-mesh = RectangleMesh()
-mesh.refine(2)
-print(f"#cells = {mesh.ncells}, #facets = {mesh.nfacets}, #vertices = {mesh.nvertices}")
-print(mesh.cell2facet)
-print(mesh.facet2vertex)
-mesh.visualise("rectangle_mesh.pdf")
+if __name__ == "__main__":
+    mesh = RectangleMesh()
+    mesh.refine(2)
+    print(
+        f"#cells = {mesh.ncells}, #facets = {mesh.nfacets}, #vertices = {mesh.nvertices}"
+    )
+    print(mesh.cell2facet)
+    print(mesh.facet2vertex)
+    mesh.visualise("rectangle_mesh.pdf")
+    print(mesh.coordinates_x.data)
+    print(mesh.coordinates_y.data)
+    print(mesh.jacobian(6, np.asarray([0.1, 0.2])))

@@ -28,39 +28,9 @@ class FiniteElement2d(ABC):
 
     def __init__(self):
         """Initialise new instance"""
-        self._cell2dof_map = []
-        self._facet2dof_map = [[], [], []]
-        self._vertex2dof_map = [[], [], []]
-        self._ndof = 0
-
-    @property
-    def cell2dof(self):
-        """Indices of unknowns associated with the interior of the reference cell
-
-        Return a list of indices. The variable _cell2dof_map needs to be constructed in
-        derived classes.
-        """
-        return self._cell2dof_map
-
-    @property
-    def facet2dof(self):
-        """Indices of unknowns associated with the the three facets of the reference cell
-
-        Return a nested list L of indices such that the list L[F] contains the indices of
-        all dofs associated with facet F. The dofs are arranged in a counter-clockwise order
-        on the facets. The variable _facet2dof_map needs to be constructed in derived classes.
-        """
-        return self._facet2dof_map
-
-    @property
-    def vertex2dof(self):
-        """Indices of unknowns associated with the the three vertices of the reference cell
-
-        Return a nested list L of indices such that the list L[V] contains the indices of
-        all dofs associated with vertex V. The variable _vertex2dof_map needs to be
-        constructed in derived classes.
-        """
-        return self._vertex2dof_map
+        self._ndof_per_vertex = 0
+        self._ndof_per_facet = 0
+        self._ndof_per_cell = 0
 
     @abstractmethod
     def evaluate(self, xi):
@@ -90,22 +60,22 @@ class FiniteElement2d(ABC):
 
         Need to set the variable _ndof in derived classes
         """
-        return self._ndof
+        return 3 * (self._ndof_per_vertex + self._ndof_per_facet) + self._ndof_per_cell
 
     @property
     def ndof_per_cell(self):
-        """Return number of unknowns associated with the cell"""
-        return len(self._cell2dof_map)
+        """Return number of unknowns associated with the interior of the cell"""
+        return self._ndof_per_cell
 
     @property
     def ndof_per_facet(self):
         """Return number of unknowns associated with each facet"""
-        return len(self._facet2dof_map[0])
+        return self._ndof_per_facet
 
     @property
     def ndof_per_vertex(self):
         """Return number of unknowns associated with each vertex"""
-        return len(self._vertex2dof_map[0])
+        return self._ndof_per_vertex
 
 
 class LinearFiniteElement2d(FiniteElement2d):
@@ -142,10 +112,7 @@ class LinearFiniteElement2d(FiniteElement2d):
     def __init__(self):
         """Initialise new instance"""
         super().__init__()
-        self._ndof = 3
-        self._cell2dof_map = []
-        self._facet2dof_map = []
-        self._vertex2dof_map = [[0], [1], [2]]
+        self._ndof_per_vertex = 1
 
     def evaluate(self, xi):
         """Evaluate all basis functions at a point inside the reference cell
@@ -195,16 +162,16 @@ class PolynomialFiniteElement2d(FiniteElement2d):
     Arrangement of the 10 unknowns on reference triangle for p=3:
 
     V 2
-        9
+        2
         ! .
         !  .
-        7   8
+        5   4
         !     . F 0
     F 1 !      .
-        4   5   6
+        6   9   3
         !         .
         !          .
-        0---1---2---3
+        0---7---8---1
     V 0       F 2      V 1
 
 
@@ -224,27 +191,38 @@ class PolynomialFiniteElement2d(FiniteElement2d):
         self._nodal_points = []
         # Spacing of nodal points
         h = 1 / self._degree
+        self._ndof_per_vertex = 1
+        self._ndof_per_facet = self._degree - 1
+        self._ndof_per_cell = ((self._degree - 1) * (self._degree - 2)) // 2
 
-        c = 0
-        for b in range(self._degree + 1):
-            for a in range(self._degree + 1 - b):
-                if a == 0 and b == 0:
-                    self._vertex2dof_map[0].append(c)
-                elif a == self._degree and b == 0:
-                    self._vertex2dof_map[1].append(c)
-                elif a == 0 and b == self._degree:
-                    self._vertex2dof_map[2].append(c)
-                elif a == 0:
-                    self._facet2dof_map[1].insert(0, c)
-                elif b == 0:
-                    self._facet2dof_map[2].append(c)
-                elif a + b == self._degree:
-                    self._facet2dof_map[0].append(c)
-                else:
-                    self._cell2dof_map.append(c)
+        # nodes associated with vertices
+        # vertex 0
+        self._powers.append([0, 0])
+        self._nodal_points.append([0, 0])
+        # vertex 1
+        self._powers.append([self._degree, 0])
+        self._nodal_points.append([1, 0])
+        # vertex 2
+        self._powers.append([0, self._degree])
+        self._nodal_points.append([0, 1])
+        # nodes associated with facets
+        # facet 0
+        for j in range(1, self._degree):
+            self._powers.append([self.degree - j, j])
+            self._nodal_points.append([(self.degree - j) * h, j * h])
+        # facet 1
+        for j in range(1, self._degree):
+            self._powers.append([0, self.degree - j])
+            self._nodal_points.append([0, (self.degree - j) * h])
+        # facet 2
+        for j in range(1, self._degree):
+            self._powers.append([j, 0])
+            self._nodal_points.append([j * h, 0])
+        # nodes associated with interior
+        for b in range(1, self._degree - 1):
+            for a in range(1, self._degree - b):
                 self._powers.append([a, b])
                 self._nodal_points.append([a * h, b * h])
-                c += 1
         # Construct the matrix A such that
         #    A_{row,col} = x_j^a*y_k^b
         # where the row corresponds to the index of the nodal point (x_j,x_k) and
@@ -323,14 +301,3 @@ class PolynomialFiniteElement2d(FiniteElement2d):
                         if b > 0:
                             grad[j, k, 1] += coefficient * b * x**a * y ** (b - 1)
         return grad
-
-
-if __name__ == "__main__":
-    finite_element = PolynomialFiniteElement2d(4)
-
-    p = np.asarray([0.25, 0.25])
-    print("cell2dof map", finite_element._cell2dof_map)
-    print("vertex2dof map", finite_element._vertex2dof_map)
-    print("facet2dof map", finite_element._facet2dof_map)
-    print(finite_element.evaluate(3, p))
-    print(finite_element.evaluate_gradient(0, p))

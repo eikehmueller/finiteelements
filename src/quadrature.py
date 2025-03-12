@@ -48,8 +48,3 @@ class GaussLegendreQuadrature2d(Quadrature2d):
                 weights.append(1 / 4 * w_x * w_y * (1 - x_sq))
         self._xi = np.asarray(xi)
         self._weights = np.asarray(weights)
-
-
-quad = GaussLegendreQuadrature2d(4)
-print(quad.xi)
-print(quad.weights)
