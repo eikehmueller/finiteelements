@@ -48,12 +48,8 @@ class Mesh2d(ABC):
         fs = self.coordinates.functionspace
         element = fs.finiteelement
         grad_B = element.evaluate_gradient(xi)
-        jacobian = np.zeros((2, 2))
-        for j in range(element.ndof):
-            jacobian[:, :] += (
-                self.coordinates.data[fs.local2global(cell, j)] * grad_B[j, :, :]
-            )
-        return jacobian
+        j_g = fs.local2global(cell, j)
+        return np.dot(self.coordinates.data[j_g], grad_B)
 
     def refine(self, nref=1):
         for _ in range(nref):
