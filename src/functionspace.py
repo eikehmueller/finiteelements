@@ -6,16 +6,16 @@ class FunctionSpace:
         :arg mesh: underlying mesh
         :arg finiteelement: underlying finite element
         """
-        self._mesh = mesh
+        self.mesh = mesh
         self.finiteelement = finiteelement
         self._ndof_per_cell = finiteelement.ndof_per_cell
         self._ndof_per_facet = finiteelement.ndof_per_facet
         self._ndof_per_vertex = finiteelement.ndof_per_vertex
-        self._ncells = self._mesh.ncells
-        self._nfacets = self._mesh.nfacets
-        self._nvertices = self._mesh.nvertices
-        self._cell2facet = self._mesh.cell2facet
-        self._facet2vertex = self._mesh.facet2vertex
+        self._ncells = self.mesh.ncells
+        self._nfacets = self.mesh.nfacets
+        self._nvertices = self.mesh.nvertices
+        self._cell2facet = self.mesh.cell2facet
+        self._facet2vertex = self.mesh.facet2vertex
 
     @property
     def ndof(self):
