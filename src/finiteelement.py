@@ -250,7 +250,7 @@ class PolynomialFiniteElement2d(FiniteElement2d):
         return dof_vector
 
     def evaluate(self, xi):
-        """Evaluate the all basis functions at a point inside the reference cell
+        """Evaluate all basis functions at a point inside the reference cell
 
         Returns a vector of length ndof with the evaluation of all basis functions.
 
@@ -282,3 +282,68 @@ class PolynomialFiniteElement2d(FiniteElement2d):
                 if b > 0:
                     grad[k, 1] += coefficient * b * x**a * y ** (b - 1)
         return grad
+
+
+class VectorElement(FiniteElement2d):
+    def __init__(self, finiteelement):
+        super().__init__()
+        self._finiteelement = finiteelement
+        self._ndof_per_vertex = 2 * finiteelement._ndof_per_vertex
+        self._ndof_per_facet = 2 * finiteelement._ndof_per_facet
+        self._ndof_per_cell = 2 * finiteelement._ndof_per_cell
+
+    def evaluate(self, xi):
+        """Evaluate all basis functions at a point inside the reference cell
+
+        Returns a vector of length ndof with the evaluation of all basis functions.
+
+        :arg xi: point xi=(x,y) at which the basis functions are to be evaluated.
+        """
+        scalar_evaluate = self._finiteelement.evaluate(xi)
+        value = np.zeros((self.ndof, 2))
+
+        offset = 0
+        for ndof_entity in (
+            self._ndof_per_vertex,
+            self._ndof_per_facet,
+            self._ndof_per_cell,
+        ):
+            for dim in (0, 1):
+                value[offset + dim : offset + dim + ndof_entity : 2, dim] = (
+                    scalar_evaluate[offset // 2 : (offset + ndof_entity) // 2]
+                )
+            offset += ndof_entity
+        return value
+
+    def evaluate_gradient(self, xi):
+        """Evaluate the gradients of all basis functions at a point inside the reference cell
+
+        Returns an vector of shape (ndof,2,2) with the evaluation of the gradients of all
+        basis functions.
+
+        :arg xi: point xi=(x,y) at which the gradients of the basis functions are to be evaluated.
+        """
+        scalar_grad = self._finiteelement.evaluate_grad(xi)
+        grad = np.zeros((self.ndof, 2, 2))
+
+        offset = 0
+        for ndof_entity in (
+            self._ndof_per_vertex,
+            self._ndof_per_facet,
+            self._ndof_per_cell,
+        ):
+            for dim in (0, 1):
+                grad[offset + dim : offset + dim + ndof_entity : 2, dim, :] = (
+                    scalar_grad[offset // 2 : (offset + ndof_entity) // 2, :]
+                )
+            offset += ndof_entity
+        return grad
+
+    def dofs(self, fhat):
+        """Evaluate the dofs on a given function on the reference element
+
+        :arg fhat: vector-valued function fhat(xhat) where xhat is a two-dimensional vector
+        """
+        dof_vector = np.empty(self.ndof)
+        for dim in range(0, 1):
+            dof_vector[dim::2] = self._finiteelement.dofs(lambda xhat: fhat(xhat)[dim])

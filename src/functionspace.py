@@ -1,3 +1,6 @@
+from collections.abc import Iterable
+
+
 class FunctionSpace:
 
     def __init__(self, mesh, finiteelement):
@@ -26,7 +29,18 @@ class FunctionSpace:
             + self._ncells * self._ndof_per_cell
         )
 
-    def local2global(self, cell, j):
+    def local2global(self, cell, idx):
+        """map local dof-index to global dof-index
+
+        :arg cell: index of cell
+        :arg idx: local dof-index or iterable of local dof-indices
+        """
+        if isinstance(idx, Iterable):
+            return [self._local2global(cell, j) for j in idx]
+        else:
+            self._local2global(cell, idx)
+
+    def _local2global(self, cell, j):
         """map local dof-index to global dof-index
 
         :arg cell: index of cell

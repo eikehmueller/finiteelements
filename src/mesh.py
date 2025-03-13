@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from abc import ABC, abstractmethod
-from finiteelement import LinearFiniteElement2d
+from finiteelement import LinearFiniteElement2d, VectorElement
 from functionspace import FunctionSpace
 from function import Function
 
@@ -38,27 +38,20 @@ class Mesh2d(ABC):
         return self._vertices.shape[0]
 
     def initialise_coordinates(self):
-        _coord_fs = FunctionSpace(self, LinearFiniteElement2d())
-        self.coordinates_x = Function(_coord_fs, "x coordinate")
-        self.coordinates_y = Function(_coord_fs, "y coordinate")
-        self.coordinates_x.data[:] = self.vertices[:, 0]
-        self.coordinates_y.data[:] = self.vertices[:, 1]
+        coord_fs = FunctionSpace(self, VectorElement(LinearFiniteElement2d()))
+        self.coordinates = Function(coord_fs, "coordinates")
+        for dim in (0, 1):
+            self.coordinates.data[dim::2] = self.vertices[:, dim]
 
     def jacobian(self, cell, xi):
         """Calculate Jacobian in a given cell for quadrature points in reference triangle"""
-        fs_x = self.coordinates_x.functionspace
-        fs_y = self.coordinates_y.functionspace
-        element_x = fs_x.finiteelement
-        element_y = fs_y.finiteelement
-        grad_B_x = element_x.evaluate_gradient(xi)
-        grad_B_y = element_y.evaluate_gradient(xi)
+        fs = self.coordinates.functionspace
+        element = fs.finiteelement
+        grad_B = element.evaluate_gradient(xi)
         jacobian = np.zeros((2, 2))
-        for j in range(element_x.ndof):
-            jacobian[0, :] += (
-                self.coordinates_x.data[fs_x.local2global(cell, j)] * grad_B_x[j, :]
-            )
-            jacobian[1, :] += (
-                self.coordinates_y.data[fs_y.local2global(cell, j)] * grad_B_y[j, :]
+        for j in range(element.ndof):
+            jacobian[:, :] += (
+                self.coordinates.data[fs.local2global(cell, j)] * grad_B[j, :, :]
             )
         return jacobian
 
