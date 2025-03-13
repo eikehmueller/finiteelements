@@ -304,8 +304,8 @@ class VectorElement(FiniteElement2d):
 
         offset = 0
         for ndof_entity in (
-            self._ndof_per_vertex,
-            self._ndof_per_facet,
+            3 * self._ndof_per_vertex,
+            3 * self._ndof_per_facet,
             self._ndof_per_cell,
         ):
             for dim in (0, 1):
