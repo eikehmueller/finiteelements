@@ -51,6 +51,13 @@ class FiniteElement2d(ABC):
         :arg xi: point xi=(x,y) at which the gradients of the basis functions are to be evaluated.
         """
 
+    @abstractmethod
+    def dofs(self, fhat):
+        """Evaluate the dofs on a given function on the reference element
+
+        :arg fhat: function fhat(xhat) where xhat is a two-dimensional vector
+        """
+
     @property
     def ndof(self):
         """Return number of unknowns
@@ -110,6 +117,17 @@ class LinearFiniteElement2d(FiniteElement2d):
         """Initialise new instance"""
         super().__init__()
         self._ndof_per_vertex = 1
+        self._nodal_points = [[0, 0], [1, 0], [0, 1]]
+
+    def dofs(self, fhat):
+        """Evaluate the dofs on a given function on the reference element
+
+        :arg fhat: function fhat(xhat) where xhat is a two-dimensional vector
+        """
+        dof_vector = np.empty(3)
+        for j in range(3):
+            dof_vector[j] = fhat(np.asarray(self._nodal_points[j]))
+        return dof_vector
 
     def evaluate(self, xi):
         """Evaluate all basis functions at a point inside the reference cell
@@ -220,6 +238,16 @@ class PolynomialFiniteElement2d(FiniteElement2d):
     @property
     def degree(self):
         return self._degree
+
+    def dofs(self, fhat):
+        """Evaluate the dofs on a given function on the reference element
+
+        :arg fhat: function fhat(xhat) where xhat is a two-dimensional vector
+        """
+        dof_vector = np.empty(self.ndof)
+        for j in range(self.ndof):
+            dof_vector[j] = fhat(np.asarray(self._nodal_points[j]))
+        return dof_vector
 
     def evaluate(self, xi):
         """Evaluate the all basis functions at a point inside the reference cell

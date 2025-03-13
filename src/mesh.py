@@ -39,8 +39,8 @@ class Mesh2d(ABC):
 
     def initialise_coordinates(self):
         _coord_fs = FunctionSpace(self, LinearFiniteElement2d())
-        self.coordinates_x = Function(_coord_fs)
-        self.coordinates_y = Function(_coord_fs)
+        self.coordinates_x = Function(_coord_fs, "x coordinate")
+        self.coordinates_y = Function(_coord_fs, "y coordinate")
         self.coordinates_x.data[:] = self.vertices[:, 0]
         self.coordinates_y.data[:] = self.vertices[:, 1]
 
@@ -92,15 +92,11 @@ class Mesh2d(ABC):
         # STEP 2: refine all cells
         for coarse_cell in range(self.ncells):
             coarse_facets = self.cell2facet[coarse_cell]
-            print(coarse_cell, coarse_facets)
-            for coarse_facet in coarse_facets:
-                print("  ", coarse_facet, coarse2finefacet[coarse_facet])
             # vertices on coarse facet centres
             facet_centre_vertex = [
                 fine_facet2vertex[coarse2finefacet[coarse_facet][0]][1]
                 for coarse_facet in coarse_facets
             ]
-            print("facet_centre_vertex", facet_centre_vertex)
             # add interior facets
             for j in range(2, -1, -1):
                 fine_facet2vertex.append(

@@ -1,9 +1,16 @@
+from finiteelement import LinearFiniteElement2d, PolynomialFiniteElement2d
+
+
 def save_to_vtk(u, filename):
     """Save a piecewise linear function as a vtk file
 
     :arg u: function to save
     :arg filename: name of file to save to
     """
+    element = u.functionspace.finiteelement
+    assert (type(element) is LinearFiniteElement2d) or (
+        (type(element) is PolynomialFiniteElement2d) and (element.degree == 1)
+    )
     mesh = u.functionspace.mesh
     assert u.ndof == mesh.nvertices
     with open(filename, "w", encoding="utf8") as f:
@@ -32,7 +39,8 @@ def save_to_vtk(u, filename):
             print("5", file=f)
         print(file=f)
         print(f"POINT_DATA {mesh.nvertices}", file=f)
-        print(f"SCALARS sample_scalars float 1", file=f)
+        label = u.label.replace(" ", "_")
+        print(f"SCALARS {label} float 1", file=f)
         print(f"LOOKUP_TABLE default", file=f)
         for j in range(u.ndof):
             print(u.data[j], file=f)
