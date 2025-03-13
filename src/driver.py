@@ -1,7 +1,7 @@
 import numpy as np
 
 from mesh import RectangleMesh
-from finiteelement import LinearFiniteElement2d
+from finiteelement import LinearFiniteElement2d, VectorElement
 from functionspace import FunctionSpace
 from function import Function
 from auxilliary import save_to_vtk
@@ -16,7 +16,7 @@ element = LinearFiniteElement2d()
 mesh = RectangleMesh(nref=5)
 fs = FunctionSpace(mesh, element)
 
-u = Function(fs)
+u = Function(fs, "u")
 interpolate(f, u)
 
 save_to_vtk(u, "u.vtk")
