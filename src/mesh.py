@@ -48,7 +48,7 @@ class Mesh2d(ABC):
         fs = self.coordinates.functionspace
         element = fs.finiteelement
         grad_B = element.evaluate_gradient(xi)
-        j_g = fs.local2global(cell, j)
+        j_g = fs.local2global(cell, range(element.ndof))
         return np.dot(self.coordinates.data[j_g], grad_B)
 
     def refine(self, nref=1):
