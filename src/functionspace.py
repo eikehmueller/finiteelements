@@ -1,3 +1,6 @@
+from collections.abc import Iterable
+
+
 class FunctionSpace:
 
     def __init__(self, mesh, finiteelement):
@@ -8,7 +11,7 @@ class FunctionSpace:
         """
         self.mesh = mesh
         self.finiteelement = finiteelement
-        self._ndof_per_cell = finiteelement.ndof_per_cell
+        self._ndof_per_interior = finiteelement.ndof_per_interior
         self._ndof_per_facet = finiteelement.ndof_per_facet
         self._ndof_per_vertex = finiteelement.ndof_per_vertex
         self._ncells = self.mesh.ncells
@@ -23,10 +26,21 @@ class FunctionSpace:
         return (
             self._nvertices * self._ndof_per_vertex
             + self._nfacets * self._ndof_per_facet
-            + self._ncells * self._ndof_per_cell
+            + self._ncells * self._ndof_per_interior
         )
 
-    def local2global(self, cell, j):
+    def local2global(self, cell, idx):
+        """map local dof-index to global dof-index
+
+        :arg cell: index of cell
+        :arg idx: local dof-index or iterable of local dof-indices
+        """
+        if isinstance(idx, Iterable):
+            return [self._local2global(cell, j) for j in idx]
+        else:
+            self._local2global(cell, idx)
+
+    def _local2global(self, cell, j):
         """map local dof-index to global dof-index
 
         :arg cell: index of cell

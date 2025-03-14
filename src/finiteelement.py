@@ -29,13 +29,10 @@ class FiniteElement2d(ABC):
 
     def __init__(self):
         """Initialise new instance"""
-        self._ndof_per_vertex = 0
-        self._ndof_per_facet = 0
-        self._ndof_per_cell = 0
 
     @abstractmethod
-    def evaluate(self, xi):
-        """Evaluate all basis function at a point inside the reference cell
+    def tabulate(self, xi):
+        """Tabulate all basis function at a point inside the reference cell
 
         Returns a vector of length ndof with the evaluation of all basis functions.
 
@@ -43,40 +40,42 @@ class FiniteElement2d(ABC):
         """
 
     @abstractmethod
-    def evaluate_gradient(self, xi):
-        """Evaluate the gradient of all basis functions at a point inside the reference cell
+    def tabulate_gradient(self, xi):
+        """Tabulate the gradient of all basis functions at a point inside the reference cell
 
         Returns an vector of shape (ndof,2) with the evaluation of the gradients of all
         basis functions.
 
-        :arg xi: point xi=(x,y) at which the gradients of the basis functions are to be evaluated.
+        :arg xi: point xi=(x,y) at which the gradients of the basis functions are to be
+                 evaluated.
         """
 
     @abstractmethod
+    def tabulate_dofs(self, fhat):
+        """Tabulate the dofs on a given function on the reference element
+
+        :arg fhat: function fhat(xhat) where xhat is a two-dimensional vector
+        """
+
     @property
+    @abstractmethod
     def ndof_per_interior(self):
         """Return number of unknowns associated with the interior of the cell"""
-        return self._ndof_per_cell
 
-    @abstractmethod
     @property
+    @abstractmethod
     def ndof_per_facet(self):
         """Return number of unknowns associated with each facet"""
-        return self._ndof_per_facet
 
-    @abstractmethod
     @property
+    @abstractmethod
     def ndof_per_vertex(self):
         """Return number of unknowns associated with each vertex"""
-        return self._ndof_per_vertex
 
     @property
     def ndof(self):
-        """Return total number of unknowns
-
-        Need to set the variable _ndof in derived classes
-        """
-        return 3 * (self._ndof_per_vertex + self._ndof_per_facet) + self._ndof_per_cell
+        """Return total number of unknowns"""
+        return 3 * (self.ndof_per_vertex + self.ndof_per_facet) + self.ndof_per_interior
 
 
 class LinearFiniteElement2d(FiniteElement2d):
@@ -113,8 +112,19 @@ class LinearFiniteElement2d(FiniteElement2d):
     def __init__(self):
         """Initialise new instance"""
         super().__init__()
+        self._nodal_points = [[0, 0], [1, 0], [0, 1]]
 
-    def evaluate(self, xi):
+    def tabulate_dofs(self, fhat):
+        """Evaluate the dofs on a given function on the reference element
+
+        :arg fhat: function fhat(xhat) where xhat is a two-dimensional vector
+        """
+        dof_vector = np.empty(3)
+        for j in range(3):
+            dof_vector[j] = fhat(np.asarray(self._nodal_points[j]))
+        return dof_vector
+
+    def tabulate(self, xi):
         """Evaluate all basis functions at a point inside the reference cell
 
         Returns a vector of length 3 with the evaluation of all three basis functions.
@@ -139,7 +149,7 @@ class LinearFiniteElement2d(FiniteElement2d):
         """Return number of unknowns associated with each vertex"""
         return 1
 
-    def evaluate_gradient(self, xi):
+    def tabulate_gradient(self, xi):
         """Evaluate the gradients of all basis function at a point inside the reference cell
 
         Returns an vector of shape (3,2) with the evaluation of the gradients of all three
@@ -190,7 +200,7 @@ class PolynomialFiniteElement2d(FiniteElement2d):
         self._nodal_points = []
         # Spacing of nodal points
         h = 1 / self.degree
-        
+
         # nodes associated with vertices
         # vertex 0
         self._powers.append([0, 0])
@@ -223,13 +233,13 @@ class PolynomialFiniteElement2d(FiniteElement2d):
         #    A_{row,col} = x_j^a*y_k^b
         # where the row corresponds to the index of the nodal point (x_j,x_k) and
         # the column to the power (a,b) that the nodal point is raised to
-        A = np.empty([len(self._nodal_points), len(self._powers)])
+        vandermonde_matrix = np.empty([len(self._nodal_points), len(self._powers)])
         for row, (x, y) in enumerate(self._nodal_points):
             for col, (a, b) in enumerate(self._powers):
-                A[row, col] = x**a * y**b
+                vandermonde_matrix[row, col] = x**a * y**b
         # Solve A.C = Id for the coefficient matrix C. The k-th column of C contains
         # the polynomial coefficients for the k-th basis function
-        self._coefficients = np.linalg.inv(A)
+        self._coefficients = np.linalg.inv(vandermonde_matrix)
 
     @property
     def ndof_per_interior(self):
@@ -244,10 +254,20 @@ class PolynomialFiniteElement2d(FiniteElement2d):
     @property
     def ndof_per_vertex(self):
         """Return number of unknowns associated with each vertex"""
-        return self._ndof_per_vertex = 1
+        return 1
 
-    def evaluate(self, xi):
-        """Evaluate the all basis functions at a point inside the reference cell
+    def tabulate_dofs(self, fhat):
+        """Evaluate the dofs on a given function on the reference element
+
+        :arg fhat: function fhat(xhat) where xhat is a two-dimensional vector
+        """
+        dof_vector = np.empty(self.ndof)
+        for j in range(self.ndof):
+            dof_vector[j] = fhat(np.asarray(self._nodal_points[j]))
+        return dof_vector
+
+    def tabulate(self, xi):
+        """Evaluate all basis functions at a point inside the reference cell
 
         Returns a vector of length ndof with the evaluation of all basis functions.
 
@@ -261,7 +281,7 @@ class PolynomialFiniteElement2d(FiniteElement2d):
                 value[k] += coefficient * x**a * y**b
         return value
 
-    def evaluate_gradient(self, xi):
+    def tabulate_gradient(self, xi):
         """Evaluate the gradients of all basis functions at a point inside the reference cell
 
         Returns an vector of shape (ndof,2) with the evaluation of the gradients of all
@@ -278,4 +298,113 @@ class PolynomialFiniteElement2d(FiniteElement2d):
                     grad[k, 0] += coefficient * a * x ** (a - 1) * y**b
                 if b > 0:
                     grad[k, 1] += coefficient * b * x**a * y ** (b - 1)
+        return grad
+
+
+class VectorElement(FiniteElement2d):
+    """Vector finite element in 2d
+
+    The element is constructed by taking the product of two copies of an underlying
+    finite element, arranging the degrees of freedom in contiguous order as shown in
+    the following example for which the underlying element is a
+    PolynomialFiniteElement2d of degree p=3:
+
+       V 2
+       4,5
+        ! .
+        !  .
+        !   .
+        !    .
+     10,11    8,9
+        !      .
+        !       . F 0
+    F 1 !        .
+        !    18   .
+     12,13   19    6,7
+        !           .
+        !            .
+        !             .
+        !    14    16  .
+       0,1---15----17---2,3
+    V 0       F 2      V 1
+
+    """
+
+    def __init__(self, finiteelement):
+        """Initialise new instance
+
+        :arg finitelement: underlying finite element
+        """
+        super().__init__()
+        self._finiteelement = finiteelement
+
+    @property
+    def ndof_per_interior(self):
+        """Return number of unknowns associated with the interior of the cell"""
+        return 2 * self._finiteelement.ndof_per_interior
+
+    @property
+    def ndof_per_facet(self):
+        """Return number of unknowns associated with each facet"""
+        return 2 * self._finiteelement.ndof_per_facet
+
+    @property
+    def ndof_per_vertex(self):
+        """Return number of unknowns associated with each vertex"""
+        return 2 * self._finiteelement.ndof_per_vertex
+
+    def tabulate_dofs(self, fhat):
+        """Tabulate all dofs on a given function on the reference element
+
+        :arg fhat: vector-valued function fhat(xhat) where xhat is a two-dimensional vector
+        """
+        dof_vector = np.empty(self.ndof)
+        for dim in range(0, 1):
+            dof_vector[dim::2] = self._finiteelement.dofs(lambda xhat: fhat(xhat)[dim])
+
+    def tabulate(self, xi):
+        """Tabulate all basis functions at a point inside the reference cell
+
+        Returns a vector of length ndof with the evaluation of all basis functions.
+
+        :arg xi: point xi=(x,y) at which the basis functions are to be evaluated.
+        """
+        scalar_tabulation = self._finiteelement.tabulate(xi)
+        value = np.zeros((self.ndof, 2))
+
+        offset = 0
+        for ndof_entity in (
+            3 * self.ndof_per_vertex,
+            3 * self.ndof_per_facet,
+            self.ndof_per_interior,
+        ):
+            for dim in (0, 1):
+                value[offset + dim : offset + dim + ndof_entity : 2, dim] = (
+                    scalar_tabulation[offset // 2 : (offset + ndof_entity) // 2]
+                )
+            offset += ndof_entity
+        return value
+
+    def tabulate_gradient(self, xi):
+        """Tabulate the gradients of all basis functions at a point inside the reference cell
+
+        Returns an vector of shape (ndof,2,2) with the evaluation of the gradients of all
+        basis functions.
+
+        :arg xi: point xi=(x,y) at which the gradients of the basis functions are to be evaluated.
+        """
+        scalar_grad = self._finiteelement.evaluate_grad(xi)
+        grad = np.zeros((self.ndof, 2, 2))
+
+        offset = 0
+        for ndof_entity in (
+            self.ndof_per_vertex,
+            self.ndof_per_facet,
+            self.ndof_per_interior,
+        ):
+            for dim in (0, 1):
+                grad[offset + dim : offset + dim + ndof_entity : 2, dim, :] = (
+                    scalar_grad[offset // 2 : (offset + ndof_entity) // 2, :]
+                )
+            offset += ndof_entity
         return grad

@@ -1,4 +1,4 @@
-import numpy as np
+from finiteelement import LinearFiniteElement2d, PolynomialFiniteElement2d
 
 
 def save_to_vtk(u, filename):
@@ -7,6 +7,10 @@ def save_to_vtk(u, filename):
     :arg u: function to save
     :arg filename: name of file to save to
     """
+    element = u.functionspace.finiteelement
+    assert (type(element) is LinearFiniteElement2d) or (
+        (type(element) is PolynomialFiniteElement2d) and (element.degree == 1)
+    )
     mesh = u.functionspace.mesh
     assert u.ndof == mesh.nvertices
     with open(filename, "w", encoding="utf8") as f:
@@ -14,24 +18,29 @@ def save_to_vtk(u, filename):
         print("function", file=f)
         print("ASCII", file=f)
         print("DATASET UNSTRUCTURED_GRID", file=f)
+        print(file=f)
         print(f"POINTS {mesh.nvertices} float", file=f)
         for j in range(mesh.nvertices):
             print(
-                f"{mesh.vertices[j,0]} {mesh.vertices[j,1]} {mesh.vertices[j,0]}",
+                f"{mesh.vertices[j,0]} {mesh.vertices[j,1]} 0",
                 file=f,
             )
-        print(f"CELLS {mesh.nvertices} 3", file=f)
+        print(file=f)
+        print(f"CELLS {mesh.ncells} {4*mesh.ncells}", file=f)
         for cell in range(mesh.ncells):
             vertices = [
                 mesh.facet2vertex[facet][0]
                 for facet in [mesh.cell2facet[cell][(j - 1) % 3] for j in range(3)]
             ]
             print(f"3 {vertices[0]} {vertices[1]} {vertices[2]}", file=f)
-        print(f"CELL_TYPES {mesh.nvertices}", file=f)
+        print(file=f)
+        print(f"CELL_TYPES {mesh.ncells}", file=f)
         for cell in range(mesh.ncells):
             print("5", file=f)
+        print(file=f)
         print(f"POINT_DATA {mesh.nvertices}", file=f)
-        print(f"SCALARS sample_scalars float 1", file=f)
+        label = u.label.replace(" ", "_")
+        print(f"SCALARS {label} float 1", file=f)
         print(f"LOOKUP_TABLE default", file=f)
         for j in range(u.ndof):
             print(u.data[j], file=f)

@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from abc import ABC, abstractmethod
-from finiteelement import LinearFiniteElement2d
+from finiteelement import LinearFiniteElement2d, VectorElement
 from functionspace import FunctionSpace
 from function import Function
 
@@ -38,29 +38,18 @@ class Mesh2d(ABC):
         return self._vertices.shape[0]
 
     def initialise_coordinates(self):
-        _coord_fs = FunctionSpace(self, LinearFiniteElement2d())
-        self.coordinates_x = Function(_coord_fs)
-        self.coordinates_y = Function(_coord_fs)
-        self.coordinates_x.data[:] = self.vertices[:, 0]
-        self.coordinates_y.data[:] = self.vertices[:, 1]
+        coord_fs = FunctionSpace(self, VectorElement(LinearFiniteElement2d()))
+        self.coordinates = Function(coord_fs, "coordinates")
+        for dim in (0, 1):
+            self.coordinates.data[dim::2] = self.vertices[:, dim]
 
     def jacobian(self, cell, xi):
         """Calculate Jacobian in a given cell for quadrature points in reference triangle"""
-        fs_x = self.coordinates_x.functionspace
-        fs_y = self.coordinates_y.functionspace
-        element_x = fs_x.finiteelement
-        element_y = fs_y.finiteelement
-        grad_B_x = element_x.evaluate_gradient(xi)
-        grad_B_y = element_y.evaluate_gradient(xi)
-        jacobian = np.zeros((2, 2))
-        for j in range(element_x.ndof):
-            jacobian[0, :] += (
-                self.coordinates_x.data[fs_x.local2global(cell, j)] * grad_B_x[j, :]
-            )
-            jacobian[1, :] += (
-                self.coordinates_y.data[fs_y.local2global(cell, j)] * grad_B_y[j, :]
-            )
-        return jacobian
+        fs = self.coordinates.functionspace
+        element = fs.finiteelement
+        grad_B = element.tabulate_gradient(xi)
+        j_g = fs.local2global(cell, range(element.ndof))
+        return np.dot(self.coordinates.data[j_g], grad_B)
 
     def refine(self, nref=1):
         for _ in range(nref):
@@ -92,15 +81,11 @@ class Mesh2d(ABC):
         # STEP 2: refine all cells
         for coarse_cell in range(self.ncells):
             coarse_facets = self.cell2facet[coarse_cell]
-            print(coarse_cell, coarse_facets)
-            for coarse_facet in coarse_facets:
-                print("  ", coarse_facet, coarse2finefacet[coarse_facet])
             # vertices on coarse facet centres
             facet_centre_vertex = [
                 fine_facet2vertex[coarse2finefacet[coarse_facet][0]][1]
                 for coarse_facet in coarse_facets
             ]
-            print("facet_centre_vertex", facet_centre_vertex)
             # add interior facets
             for j in range(2, -1, -1):
                 fine_facet2vertex.append(

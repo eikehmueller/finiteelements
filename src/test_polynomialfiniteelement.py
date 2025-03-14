@@ -21,7 +21,7 @@ def test_polynomial_finiteelement2d_nodal_evaluations(degree):
     xi = np.asarray(xi)
     evaluations = np.empty((element.ndof, element.ndof))
     for j in range(element.ndof):
-        evaluations[j, :] = element.evaluate(xi[j, :])
+        evaluations[j, :] = element.tabulate(xi[j, :])
     expected = np.eye(element.ndof)
     if degree == 2:
         perm = [0, 5, 1, 4, 3, 2]
@@ -36,7 +36,7 @@ def test_polynomial_finiteelement2d_nodal_evaluations(degree):
 
 
 def test_polynomial_finiteelement2d_linear(rng):
-    """Check that evaluation of polynomial basis functions of degree 1 give same
+    """Check that tabulation of polynomial basis functions of degree 1 give same
     result as linear basis functions"""
 
     element_lin = LinearFiniteElement2d()
@@ -45,12 +45,12 @@ def test_polynomial_finiteelement2d_linear(rng):
     xi = rng.uniform(size=(nsamples, 2))
     for j in range(nsamples):
         assert np.allclose(
-            element_lin.evaluate(xi[j, :]), element_poly.evaluate(xi[j, :])
+            element_lin.tabulate(xi[j, :]), element_poly.tabulate(xi[j, :])
         )
 
 
 def test_polynomial_finiteelement2d_linear_gradient(rng):
-    """Check that gradient evaluation of polynomial basis functions of degree 1 give same
+    """Check that gradient tabulation of polynomial basis functions of degree 1 give same
     result as linear basis functions"""
     element_lin = LinearFiniteElement2d()
     element_poly = PolynomialFiniteElement2d(1)
@@ -58,6 +58,6 @@ def test_polynomial_finiteelement2d_linear_gradient(rng):
     xi = rng.uniform(size=(nsamples, 2))
     for j in range(nsamples):
         assert np.allclose(
-            element_lin.evaluate_gradient(xi[j, :]),
-            element_poly.evaluate_gradient(xi[j, :]),
+            element_lin.tabulate_gradient(xi[j, :]),
+            element_poly.tabulate_gradient(xi[j, :]),
         )
