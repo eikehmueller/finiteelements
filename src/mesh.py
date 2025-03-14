@@ -9,33 +9,21 @@ from function import Function
 
 class Mesh2d(ABC):
     def __init__(self):
-        self._vertices = None
-        self._cell2facet = None
-        self._facet2vertex = None
-
-    @property
-    def vertices(self):
-        return np.array(self._vertices)
-
-    @property
-    def cell2facet(self):
-        return list(self._cell2facet)
-
-    @property
-    def facet2vertex(self):
-        return list(self._facet2vertex)
+        self.vertices = None
+        self.cell2facet = None
+        self.facet2vertex = None
 
     @property
     def ncells(self):
-        return len(self._cell2facet)
+        return len(self.cell2facet)
 
     @property
     def nfacets(self):
-        return len(self._facet2vertex)
+        return len(self.facet2vertex)
 
     @property
     def nvertices(self):
-        return self._vertices.shape[0]
+        return self.vertices.shape[0]
 
     def initialise_coordinates(self):
         coord_fs = FunctionSpace(self, VectorFiniteElement2d(LinearFiniteElement2d()))
@@ -62,16 +50,14 @@ class Mesh2d(ABC):
         # Pointer to current fine facet
         facet_idx = 0
         # make space for new vertices
-        self._vertices = np.pad(self._vertices, ((0, self.nfacets), (0, 0)))
+        self.vertices = np.pad(self.vertices, ((0, self.nfacets), (0, 0)))
         # STEP 1: refine all edges and add new vertices
         fine_facet2vertex = []
         coarse2finefacet = []
         for coarse_facet in range(self.nfacets):
             new_vertex = vertex_idx
             v1, v2 = self.facet2vertex[coarse_facet]
-            self._vertices[new_vertex, :] = 0.5 * (
-                self._vertices[v1] + self._vertices[v2]
-            )
+            self.vertices[new_vertex, :] = 0.5 * (self.vertices[v1] + self.vertices[v2])
             fine_facet2vertex.append([v1, new_vertex])
             fine_facet2vertex.append([new_vertex, v2])
             coarse2finefacet.append([facet_idx, facet_idx + 1])
@@ -110,8 +96,8 @@ class Mesh2d(ABC):
                 ]
             )
             facet_idx += 3
-        self._cell2facet = fine_cell2facet
-        self._facet2vertex = fine_facet2vertex
+        self.cell2facet = fine_cell2facet
+        self.facet2vertex = fine_facet2vertex
 
     def visualise(self, filename):
         plt.clf()
@@ -189,11 +175,11 @@ class RectangleMesh(Mesh2d):
         super().__init__()
         self._Lx = Lx
         self._Ly = Ly
-        self._vertices = np.asarray(
+        self.vertices = np.asarray(
             [[0, 0], [self._Lx, 0], [0, self._Ly], [self._Lx, self._Ly]], dtype=float
         )
-        self._cell2facet = [[0, 1, 2], [3, 1, 4]]
-        self._facet2vertex = [[0, 1], [1, 2], [2, 0], [3, 1], [2, 3]]
+        self.cell2facet = [[0, 1, 2], [3, 1, 4]]
+        self.facet2vertex = [[0, 1], [1, 2], [2, 0], [3, 1], [2, 3]]
         self.refine(nref)
 
     @property
