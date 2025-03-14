@@ -31,14 +31,6 @@ class Mesh2d(ABC):
         for dim in (0, 1):
             self.coordinates.data[dim::2] = self.vertices[:, dim]
 
-    def jacobian(self, cell, xi):
-        """Calculate Jacobian in a given cell for quadrature points in reference triangle"""
-        fs = self.coordinates.functionspace
-        element = fs.finiteelement
-        grad_B = element.tabulate_gradient(xi)
-        j_g = fs.local2global(cell, range(element.ndof))
-        return np.dot(self.coordinates.data[j_g], grad_B)
-
     def refine(self, nref=1):
         for _ in range(nref):
             self._refine()
@@ -189,17 +181,3 @@ class RectangleMesh(Mesh2d):
     @property
     def Ly(self):
         return self._Ly
-
-
-if __name__ == "__main__":
-    mesh = RectangleMesh()
-    mesh.refine(2)
-    print(
-        f"#cells = {mesh.ncells}, #facets = {mesh.nfacets}, #vertices = {mesh.nvertices}"
-    )
-    print(mesh.cell2facet)
-    print(mesh.facet2vertex)
-    mesh.visualise("rectangle_mesh.pdf")
-    print(mesh.coordinates_x.data)
-    print(mesh.coordinates_y.data)
-    print(mesh.jacobian(6, np.asarray([0.1, 0.2])))
