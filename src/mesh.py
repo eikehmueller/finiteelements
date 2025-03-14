@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from abc import ABC, abstractmethod
-from finiteelement import LinearFiniteElement2d, VectorElement
+from finiteelement import LinearFiniteElement2d, VectorFiniteElement2d
 from functionspace import FunctionSpace
 from function import Function
 
@@ -38,7 +38,7 @@ class Mesh2d(ABC):
         return self._vertices.shape[0]
 
     def initialise_coordinates(self):
-        coord_fs = FunctionSpace(self, VectorElement(LinearFiniteElement2d()))
+        coord_fs = FunctionSpace(self, VectorFiniteElement2d(LinearFiniteElement2d()))
         self.coordinates = Function(coord_fs, "coordinates")
         for dim in (0, 1):
             self.coordinates.data[dim::2] = self.vertices[:, dim]

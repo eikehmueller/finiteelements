@@ -1,7 +1,7 @@
 import numpy as np
 
 from mesh import RectangleMesh
-from finiteelement import LinearFiniteElement2d, VectorElement
+from finiteelement import LinearFiniteElement2d, VectorFiniteElement2d
 from functionspace import FunctionSpace
 from function import Function
 from auxilliary import save_to_vtk

@@ -1,6 +1,3 @@
-from functionspace import FunctionSpace
-
-
 import numpy as np
 
 

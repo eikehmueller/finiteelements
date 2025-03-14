@@ -1,5 +1,4 @@
 import numpy as np
-from function import Function
 
 
 def interpolate(f, u):

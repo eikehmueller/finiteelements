@@ -301,7 +301,7 @@ class PolynomialFiniteElement2d(FiniteElement2d):
         return grad
 
 
-class VectorElement(FiniteElement2d):
+class VectorFiniteElement2d(FiniteElement2d):
     """Vector finite element in 2d
 
     The element is constructed by taking the product of two copies of an underlying
@@ -327,6 +327,9 @@ class VectorElement(FiniteElement2d):
         !    14    16  .
        0,1---15----17---2,3
     V 0       F 2      V 1
+
+    Dofs with even/odd indices correspond to the vector components in the two
+    dimensions respectively.
 
     """
 
@@ -359,8 +362,11 @@ class VectorElement(FiniteElement2d):
         :arg fhat: vector-valued function fhat(xhat) where xhat is a two-dimensional vector
         """
         dof_vector = np.empty(self.ndof)
-        for dim in range(0, 1):
-            dof_vector[dim::2] = self._finiteelement.dofs(lambda xhat: fhat(xhat)[dim])
+        for dim in (0, 1):
+            dof_vector[dim::2] = self._finiteelement.tabulate_dofs(
+                lambda xhat: fhat(xhat)[dim]
+            )
+        return dof_vector
 
     def tabulate(self, xi):
         """Tabulate all basis functions at a point inside the reference cell
@@ -371,18 +377,8 @@ class VectorElement(FiniteElement2d):
         """
         scalar_tabulation = self._finiteelement.tabulate(xi)
         value = np.zeros((self.ndof, 2))
-
-        offset = 0
-        for ndof_entity in (
-            3 * self.ndof_per_vertex,
-            3 * self.ndof_per_facet,
-            self.ndof_per_interior,
-        ):
-            for dim in (0, 1):
-                value[offset + dim : offset + dim + ndof_entity : 2, dim] = (
-                    scalar_tabulation[offset // 2 : (offset + ndof_entity) // 2]
-                )
-            offset += ndof_entity
+        for dim in (0, 1):
+            value[dim::2, dim] = scalar_tabulation[:]
         return value
 
     def tabulate_gradient(self, xi):
@@ -396,15 +392,6 @@ class VectorElement(FiniteElement2d):
         scalar_grad = self._finiteelement.evaluate_grad(xi)
         grad = np.zeros((self.ndof, 2, 2))
 
-        offset = 0
-        for ndof_entity in (
-            self.ndof_per_vertex,
-            self.ndof_per_facet,
-            self.ndof_per_interior,
-        ):
-            for dim in (0, 1):
-                grad[offset + dim : offset + dim + ndof_entity : 2, dim, :] = (
-                    scalar_grad[offset // 2 : (offset + ndof_entity) // 2, :]
-                )
-            offset += ndof_entity
+        for dim in (0, 1):
+            grad[dim::2, dim, :] = scalar_grad[:, :]
         return grad
