@@ -1,0 +1,42 @@
+"""Computational meshes"""
+
+import numpy as np
+from fem.mesh import Mesh
+
+__all__ = ["RectangleMesh", "TriangleMesh"]
+
+
+class RectangleMesh(Mesh):
+    """Triangular mesh ontained by refinement of a single rectangle"""
+
+    def __init__(self, Lx=1.0, Ly=1.0, nref=0):
+        """Initialise a new instance
+
+        :arg Lx: horizontal extent of mesh
+        :arg Ly: vertical extent of mesh
+        """
+        super().__init__()
+        self.Lx = Lx
+        self.Ly = Ly
+        self.vertices = np.asarray(
+            [[0, 0], [self.Lx, 0], [0, self.Ly], [self.Lx, self.Ly]], dtype=float
+        )
+        self.cell2facet = [[0, 1, 2], [3, 1, 4]]
+        self.facet2vertex = [[0, 1], [1, 2], [2, 0], [3, 1], [2, 3]]
+        self.refine(nref)
+
+
+class TriangleMesh(Mesh):
+    """Trangular mesh ontained by refinement of a single triangle"""
+
+    def __init__(self, corners=[[0, 0], [1, 0], [0, 1]], nref=0):
+        """Initialise new instance
+
+        :arg vertices: Coordinates of the three corners of the unrefined mesh
+        :arg nref: number of refinements
+        """
+        super().__init__()
+        self.vertices = np.asarray(corners, dtype=float)
+        self.cell2facet = [[0, 1, 2]]
+        self.facet2vertex = [[0, 1], [1, 2], [2, 0]]
+        self.refine(nref)

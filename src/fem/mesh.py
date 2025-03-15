@@ -1,45 +1,70 @@
-"""Computational meshes"""
+"""Base class for two-dimensional triangular meshes"""
 
 import numpy as np
 from matplotlib import pyplot as plt
 
-from abc import ABC, abstractmethod
 from fem.linearelement import LinearElement
 from fem.vectorelement import VectorElement
 from fem.functionspace import FunctionSpace
 from fem.function import Function
 
+__all__ = ["Mesh"]
 
-class Mesh2d(ABC):
+
+class Mesh:
+    """Base class of a two-dimensional mesh consisting of triangular cells
+
+    This class should not be instantiated since it does not contain any cells
+    """
+
     def __init__(self):
+        """Initialise a new instance"""
         self.vertices = None
         self.cell2facet = None
         self.facet2vertex = None
 
     @property
     def ncells(self):
+        """Number of cells of the mesh"""
         return len(self.cell2facet)
 
     @property
     def nfacets(self):
+        """Number of facets of the mesh"""
         return len(self.facet2vertex)
 
     @property
     def nvertices(self):
+        """Number of vertices of the mesh"""
         return self.vertices.shape[0]
 
-    def initialise_coordinates(self):
+    def _initialise_coordinates(self):
+        """Initialise the piecewise linear coordinate field
+
+        The coordinate field is constructed from the coordinates of the mesh vertices,
+        this method needs to be called after refinement.
+        """
         coord_fs = FunctionSpace(self, VectorElement(LinearElement()))
         self.coordinates = Function(coord_fs, "coordinates")
         for dim in (0, 1):
             self.coordinates.data[dim::2] = self.vertices[:, dim]
 
     def refine(self, nref=1):
+        """Refine the mesh multiple times by subdividing each triangle
+
+        Repeatedly sub-divides each mesh cell into four smaller similar smaller triangles
+
+        :arg nref: number of refinement steps
+        """
         for _ in range(nref):
             self._refine()
-        self.initialise_coordinates()
+        self._initialise_coordinates()
 
     def _refine(self):
+        """Refine the mesh by once subdividing each triangle
+
+        Sub-divides each mesh cell into four smaller similar smaller triangles."""
+
         # Pointer to current vertex
         vertex_idx = self.nvertices
         # Pointer to current fine facet
@@ -95,6 +120,10 @@ class Mesh2d(ABC):
         self.facet2vertex = fine_facet2vertex
 
     def visualise(self, filename):
+        """Plot the mesh and save to disk
+
+        :arg filename: name of file to plot to
+        """
         plt.clf()
         fig, axs = plt.subplots(2, 2)
         # points
@@ -163,16 +192,3 @@ class Mesh2d(ABC):
                 fontsize=6,
             )
         plt.savefig(filename, bbox_inches="tight")
-
-
-class RectangleMesh(Mesh2d):
-    def __init__(self, Lx=1.0, Ly=1.0, nref=0):
-        super().__init__()
-        self.Lx = Lx
-        self.Ly = Ly
-        self.vertices = np.asarray(
-            [[0, 0], [self.Lx, 0], [0, self.Ly], [self.Lx, self.Ly]], dtype=float
-        )
-        self.cell2facet = [[0, 1, 2], [3, 1, 4]]
-        self.facet2vertex = [[0, 1], [1, 2], [2, 0], [3, 1], [2, 3]]
-        self.refine(nref)

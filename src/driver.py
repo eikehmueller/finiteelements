@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from fem.mesh import RectangleMesh
+from fem.utilitymeshes import RectangleMesh
 from fem.linearelement import LinearElement
 from fem.functionspace import FunctionSpace
 from fem.function import Function
