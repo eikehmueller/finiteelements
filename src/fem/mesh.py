@@ -14,7 +14,43 @@ __all__ = ["Mesh"]
 class Mesh:
     """Base class of a two-dimensional mesh consisting of triangular cells
 
-    This class should not be instantiated since it does not contain any cells
+    Stores the mesh topology in the form of adjacency maps and the mesh geometry in the form
+    of piecewise line functions.
+
+    Each mesh cell is of the following form:
+
+        V_2
+         *
+         ! .
+         !  .
+         !    .                         F
+         !     . F_0            V_a ----->----- V_b
+     F_1 v      ^
+         !   C    .
+         !         .
+         !          .
+         *---->------*
+     V_0       F_2      V_1
+
+    The facets are oriented in a counterclockwise orientation. The topology is represented by
+    storing the indices [F_0(C),F_1(C),F_2(C)] (in this order) of the facets of a given cell C
+    in a list cell2facet
+
+        cell2facet = [[F_0(0),F_1(0),F_2(0)], [F_0(1),F_1(1),F_2(1)],...]
+
+    and the indices [V_a(F), V_b(F)] (in this order) of the vertices that define a given facet F
+    in a list facet2vertex
+
+        facet2vertex = [[V_a(0),V_b(0)],[V_a(1),V_b(1)],...]
+
+    Note that the three vertices of a given cell C can be obtained as
+
+        V_0(C) = facet2vertex[cell2facet[C][2]]
+        V_1(C) = facet2vertex[cell2facet[C][0]]
+        V_2(C) = facet2vertex[cell2facet[C][1]]
+
+    This class should not be instantiated since it does not contain any cells, use one of the meshes
+    in utilitymesh.py instead.
     """
 
     def __init__(self):
@@ -22,6 +58,10 @@ class Mesh:
         self.vertices = None
         self.cell2facet = None
         self.facet2vertex = None
+        self.vertices = np.asarray([])
+        self.cell2facet = [[]]
+        self.facet2vertex = [[]]
+        self.coordinates = None
 
     @property
     def ncells(self):

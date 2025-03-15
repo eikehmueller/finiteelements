@@ -4,6 +4,7 @@ from collections.abc import Iterable
 
 
 class FunctionSpace:
+    """Finite element function space"""
 
     def __init__(self, mesh, finiteelement):
         """Initialise a new instance
@@ -24,7 +25,10 @@ class FunctionSpace:
         )
 
     def local2global(self, cell, idx):
-        """map local dof-index to global dof-index
+        """Map local dof-index to global dof-index in a given cell
+
+        The method returns either a single global dof-index if idx is an integer or a list of global
+        dof-indices if idx is iterable.
 
         :arg cell: index of cell
         :arg idx: local dof-index or iterable of local dof-indices
@@ -35,7 +39,7 @@ class FunctionSpace:
             self._local2global(cell, idx)
 
     def _local2global(self, cell, j):
-        """map local dof-index to global dof-index
+        """Map a single local dof-index to global dof-index in a given cell
 
         :arg cell: index of cell
         :arg j: local dof-index
