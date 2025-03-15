@@ -91,7 +91,10 @@ class FunctionSpace:
             self.finiteelement.ndof_per_vertex + self.finiteelement.ndof_per_facet
         ):
             # dof is associated with facet
-            f = self.mesh.cell2facet[cell][j // self.finiteelement.ndof_per_facet]
+            f = self.mesh.cell2facet[cell][
+                (j - 3 * self.finiteelement.ndof_per_vertex)
+                // self.finiteelement.ndof_per_facet
+            ]
             return (
                 self.mesh.nvertices * self.finiteelement.ndof_per_vertex
                 + f * self.finiteelement.ndof_per_facet
