@@ -19,7 +19,7 @@ class RectangleMesh(Mesh):
         self.Lx = Lx
         self.Ly = Ly
         self.vertices = np.asarray(
-            [[0, 0], [self.Lx, 0], [0, self.Ly], [self.Lx, self.Ly]], dtype=float
+            [[0, self.Ly], [0, 0], [self.Lx, 0], [self.Lx, self.Ly]], dtype=float
         )
         self.cell2facet = [[0, 1, 2], [3, 1, 4]]
         self.facet2vertex = [[1, 2], [2, 0], [0, 1], [3, 2], [0, 3]]
