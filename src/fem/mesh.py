@@ -168,19 +168,11 @@ class Mesh2d(ABC):
 class RectangleMesh(Mesh2d):
     def __init__(self, Lx=1.0, Ly=1.0, nref=0):
         super().__init__()
-        self._Lx = Lx
-        self._Ly = Ly
+        self.Lx = Lx
+        self.Ly = Ly
         self.vertices = np.asarray(
-            [[0, 0], [self._Lx, 0], [0, self._Ly], [self._Lx, self._Ly]], dtype=float
+            [[0, 0], [self.Lx, 0], [0, self.Ly], [self.Lx, self.Ly]], dtype=float
         )
         self.cell2facet = [[0, 1, 2], [3, 1, 4]]
         self.facet2vertex = [[0, 1], [1, 2], [2, 0], [3, 1], [2, 3]]
         self.refine(nref)
-
-    @property
-    def Lx(self):
-        return self._Lx
-
-    @property
-    def Ly(self):
-        return self._Ly
