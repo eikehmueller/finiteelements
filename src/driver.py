@@ -11,6 +11,7 @@ from fem.algorithms import interpolate
 
 
 def f(x):
+    """function to interpolate"""
     return np.sin(2 * np.pi * x[0]) * np.sin(4 * np.pi * x[1])
 
 

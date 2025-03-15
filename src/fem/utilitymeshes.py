@@ -29,13 +29,14 @@ class RectangleMesh(Mesh):
 class TriangleMesh(Mesh):
     """Trangular mesh ontained by refinement of a single triangle"""
 
-    def __init__(self, corners=[[0, 0], [1, 0], [0, 1]], nref=0):
+    def __init__(self, corners=None, nref=0):
         """Initialise new instance
 
         :arg vertices: Coordinates of the three corners of the unrefined mesh
         :arg nref: number of refinements
         """
         super().__init__()
+        corners = [[0, 0], [1, 0], [0, 1]] if corners is None else corners
         self.vertices = np.asarray(corners, dtype=float)
         self.cell2facet = [[0, 1, 2]]
         self.facet2vertex = [[0, 1], [1, 2], [2, 0]]

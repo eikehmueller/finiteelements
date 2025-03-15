@@ -1,3 +1,5 @@
+"""Some auxilliary method"""
+
 from fem.linearelement import LinearElement
 from fem.polynomialelement import PolynomialElement
 
@@ -27,8 +29,8 @@ def save_to_vtk(u, filename):
     :arg filename: name of file to save to
     """
     element = u.functionspace.finiteelement
-    assert (type(element) is LinearElement) or (
-        (type(element) is PolynomialElement) and (element.degree == 1)
+    assert isinstance(element, LinearElement) or (
+        isinstance(element, PolynomialElement) and (element.degree == 1)
     ), "Only linear finite elements can be saved in vtk format"
     mesh = u.functionspace.mesh
     assert u.ndof == mesh.nvertices
@@ -60,6 +62,6 @@ def save_to_vtk(u, filename):
         print(f"POINT_DATA {mesh.nvertices}", file=f)
         label = u.label.replace(" ", "_")
         print(f"SCALARS {label} float 1", file=f)
-        print(f"LOOKUP_TABLE default", file=f)
+        print("LOOKUP_TABLE default", file=f)
         for j in range(u.ndof):
             print(u.data[j], file=f)

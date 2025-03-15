@@ -163,7 +163,7 @@ class Mesh:
         :arg filename: name of file to plot to
         """
         plt.clf()
-        fig, axs = plt.subplots(2, 2)
+        _, axs = plt.subplots(2, 2)
         # points
         axs[0, 0].plot(
             self.vertices[:, 0],

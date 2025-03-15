@@ -69,7 +69,7 @@ class VectorElement(FiniteElement):
         dof_vector = np.empty(self.ndof)
         for dim in (0, 1):
             dof_vector[dim::2] = self._finiteelement.tabulate_dofs(
-                lambda xhat: fhat(xhat)[dim]
+                lambda xhat, d=dim: fhat(xhat)[d]
             )
         return dof_vector
 
