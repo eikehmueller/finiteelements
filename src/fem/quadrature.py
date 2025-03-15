@@ -1,30 +1,26 @@
-"""Quadrature rules"""
+"""Quadrature rules on reference triangle"""
 
+from abc import ABC, abstractmethod
 import numpy as np
 
-__all__ = ["Quadrature2d", "GaussLegendreQuadrature2d"]
+__all__ = ["Quadrature", "GaussLegendreQuadrature"]
 
 
-class Quadrature2d:
+class Quadrature(ABC):
     """Base class for quadrature in 2d"""
 
-    def __init__(self):
-        """Initialise a new instance"""
-        self._xi = []
-        self._weights = []
+    @property
+    @abstractmethod
+    def nodes(self):
+        """Return quadrature nodes"""
 
     @property
-    def xi(self):
-        """return quadrature points"""
-        return self._xi
-
-    @property
+    @abstractmethod
     def weights(self):
         """Return quadrature weights"""
-        return self._weights
 
 
-class GaussLegendreQuadrature2d(Quadrature2d):
+class GaussLegendreQuadrature(Quadrature):
     """Gauss-Legendre quadrature on reference triangle
 
     The tensor-product of one-dimensional Gauss-Legendre quadrature of given degree is
@@ -50,5 +46,15 @@ class GaussLegendreQuadrature2d(Quadrature2d):
                 y_sq = 1 / 2 * (1 + y)
                 xi.append([x_sq, (1 - x_sq) * y_sq])
                 weights.append(1 / 4 * w_x * w_y * (1 - x_sq))
-        self._xi = np.asarray(xi)
+        self._nodes = np.asarray(xi)
         self._weights = np.asarray(weights)
+
+    @property
+    def nodes(self):
+        """Return quadrature nodes"""
+        return self._nodes
+
+    @property
+    def weights(self):
+        """Return quadrature weights"""
+        return self._weights
