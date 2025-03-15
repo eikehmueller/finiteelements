@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
-from fem.finiteelement import PolynomialFiniteElement2d, VectorFiniteElement2d
+from fem.polynomialelement import PolynomialElement
+from fem.vectorelement import VectorElement
 
 
 def nodal_points(degree):
@@ -27,22 +28,22 @@ def nodal_points(degree):
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
-def test_vector_finiteelement2d_tabulation(degree):
-    finiteelement = PolynomialFiniteElement2d(degree)
-    vectorelement = VectorFiniteElement2d(finiteelement)
+def test_vectorelement_tabulation(degree):
+    element = PolynomialElement(degree)
+    vectorelement = VectorElement(element)
     xi = nodal_points(degree)
-    tabulation = np.empty((finiteelement.ndof, vectorelement.ndof, 2))
-    expected_tabulation = np.zeros((finiteelement.ndof, vectorelement.ndof, 2))
-    for j in range(finiteelement.ndof):
+    tabulation = np.empty((element.ndof, vectorelement.ndof, 2))
+    expected_tabulation = np.zeros((element.ndof, vectorelement.ndof, 2))
+    for j in range(element.ndof):
         tabulation[j, :, :] = vectorelement.tabulate(xi[j])
         expected_tabulation[j, 2 * j : 2 * j + 2, :] = np.eye(2)
     assert np.allclose(tabulation, expected_tabulation)
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
-def test_vector_finiteelement2d_dof_tabulation(degree):
-    finiteelement = PolynomialFiniteElement2d(degree)
-    vectorelement = VectorFiniteElement2d(finiteelement)
+def test_vectorelement_dof_tabulation(degree):
+    element = PolynomialElement(degree)
+    vectorelement = VectorElement(element)
     xi = nodal_points(degree)
     fhat = lambda x: np.asarray([np.exp(x[0]) * (1 + x[1]), x[0] + np.exp(2 * x[1])])
     assert np.allclose(vectorelement.tabulate_dofs(fhat), fhat(xi.T).T.flatten())

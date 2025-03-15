@@ -2,7 +2,8 @@
 
 import numpy as np
 import pytest
-from fem.finiteelement import LinearFiniteElement2d, PolynomialFiniteElement2d
+from fem.linearelement import LinearElement
+from fem.polynomialelement import PolynomialElement
 
 
 @pytest.fixture
@@ -35,9 +36,9 @@ def nodal_points(degree):
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
-def test_polynomial_finiteelement2d_nodal_tabulation(degree):
+def test_polynomialelement_nodal_tabulation(degree):
     """Check that phi_k(xi_j) = delta_{j,k} for the linear basis functions"""
-    element = PolynomialFiniteElement2d(degree)
+    element = PolynomialElement(degree)
     xi = nodal_points(degree)
     evaluations = np.empty((element.ndof, element.ndof))
     for j in range(element.ndof):
@@ -46,20 +47,20 @@ def test_polynomial_finiteelement2d_nodal_tabulation(degree):
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
-def test_polynomial_finiteelement2d_dof_tabulation(degree):
+def test_polynomialelement_dof_tabulation(degree):
     """Check that dof-evaluation works as expected"""
-    element = PolynomialFiniteElement2d(degree)
+    element = PolynomialElement(degree)
     # function to test
     fhat = lambda x: np.exp(0.5 + x[0] + 2 * x[1])
     xi = nodal_points(degree)
     assert np.allclose(fhat(xi.T), element.tabulate_dofs(fhat))
 
 
-def test_polynomial_finiteelement2d_agrees_with_linear(rng):
+def test_polynomialelement_agrees_with_linear(rng):
     """Check that tabulation of polynomial basis functions of degree 1 give same
     result as for linear basis functions"""
-    element_lin = LinearFiniteElement2d()
-    element_poly = PolynomialFiniteElement2d(1)
+    element_lin = LinearElement()
+    element_poly = PolynomialElement(1)
     nsamples = 32
     xi = rng.uniform(size=(nsamples, 2))
     for j in range(nsamples):
@@ -68,11 +69,11 @@ def test_polynomial_finiteelement2d_agrees_with_linear(rng):
         )
 
 
-def test_polynomial_finiteelement2d_agrees_with_linear_gradient(rng):
+def test_polynomialelement_agrees_with_linear_gradient(rng):
     """Check that gradient tabulation of polynomial basis functions of degree 1 give same
     result as for linear basis functions"""
-    element_lin = LinearFiniteElement2d()
-    element_poly = PolynomialFiniteElement2d(1)
+    element_lin = LinearElement()
+    element_poly = PolynomialElement(1)
     nsamples = 32
     xi = rng.uniform(size=(nsamples, 2))
     for j in range(nsamples):

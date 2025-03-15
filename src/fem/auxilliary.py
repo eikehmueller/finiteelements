@@ -1,7 +1,6 @@
-from fem.finiteelement import (
-    LinearFiniteElement2d,
-    PolynomialFiniteElement2d,
-)
+from fem.linearelement import LinearElement
+from fem.polynomialelement import PolynomialElement
+
 import numpy as np
 
 __all__ = ["jacobian", "save_to_vtk"]
@@ -28,9 +27,9 @@ def save_to_vtk(u, filename):
     :arg filename: name of file to save to
     """
     element = u.functionspace.finiteelement
-    assert (type(element) is LinearFiniteElement2d) or (
-        (type(element) is PolynomialFiniteElement2d) and (element.degree == 1)
-    )
+    assert (type(element) is LinearElement) or (
+        (type(element) is PolynomialElement) and (element.degree == 1)
+    ), "Only linear finite elements can be saved in vtk format"
     mesh = u.functionspace.mesh
     assert u.ndof == mesh.nvertices
     with open(filename, "w", encoding="utf8") as f:
