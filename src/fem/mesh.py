@@ -58,9 +58,7 @@ class Mesh:
         self.vertices = None
         self.cell2facet = None
         self.facet2vertex = None
-        self.vertices = np.asarray([])
-        self.cell2facet = [[]]
-        self.facet2vertex = [[]]
+        self.vertices = None
         self.coordinates = None
 
     @property
