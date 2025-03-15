@@ -98,12 +98,21 @@ class FunctionSpace:
             return (
                 self.mesh.nvertices * self.finiteelement.ndof_per_vertex
                 + f * self.finiteelement.ndof_per_facet
-                + (j % self.finiteelement.ndof_per_facet)
+                + (
+                    (j - 3 * self.finiteelement.ndof_per_vertex)
+                    % self.finiteelement.ndof_per_facet
+                )
             )
         else:
             # dof is associated with cell
             return (
                 self.mesh.nvertices * self.finiteelement.ndof_per_vertex
                 + self.mesh.nfacets * self.finiteelement.ndof_per_facet
+                + cell * self.finiteelement.ndof_per_interior
                 + j
+                - 3
+                * (
+                    self.finiteelement.ndof_per_vertex
+                    + self.finiteelement.ndof_per_facet
+                )
             )

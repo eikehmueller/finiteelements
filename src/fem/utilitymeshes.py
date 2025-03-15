@@ -22,7 +22,7 @@ class RectangleMesh(Mesh):
             [[0, 0], [self.Lx, 0], [0, self.Ly], [self.Lx, self.Ly]], dtype=float
         )
         self.cell2facet = [[0, 1, 2], [3, 1, 4]]
-        self.facet2vertex = [[0, 1], [1, 2], [2, 0], [3, 1], [2, 3]]
+        self.facet2vertex = [[1, 2], [2, 0], [0, 1], [3, 2], [0, 3]]
         self.refine(nref)
 
 
@@ -39,5 +39,5 @@ class TriangleMesh(Mesh):
         corners = [[0, 0], [1, 0], [0, 1]] if corners is None else corners
         self.vertices = np.asarray(corners, dtype=float)
         self.cell2facet = [[0, 1, 2]]
-        self.facet2vertex = [[0, 1], [1, 2], [2, 0]]
+        self.facet2vertex = [[1, 2], [2, 0], [0, 1]]
         self.refine(nref)
