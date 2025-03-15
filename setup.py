@@ -18,7 +18,7 @@ with open("requirements.txt", "r", encoding="utf8") as f:
 
 # Run setup
 setup(
-    name="finiteelements",
+    name="fem",
     author="Eike Mueller",
     author_email="e.mueller@bath.ac.uk",
     description="Implementation of the finite element method in two dimensions.",

@@ -1,4 +1,8 @@
+"""Quadrature rules"""
+
 import numpy as np
+
+__all__ = ["Quadrature2d", "GaussLegendreQuadrature2d"]
 
 
 class Quadrature2d:

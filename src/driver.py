@@ -1,11 +1,13 @@
+"""Main program"""
+
 import numpy as np
 
 from mesh import RectangleMesh
-from finiteelement import LinearFiniteElement2d, VectorFiniteElement2d
-from functionspace import FunctionSpace
-from function import Function
-from auxilliary import save_to_vtk
-from algorithms import interpolate
+from fem.finiteelement import LinearFiniteElement2d, VectorFiniteElement2d
+from fem.functionspace import FunctionSpace
+from fem.function import Function
+from fem.auxilliary import save_to_vtk
+from fem.algorithms import interpolate
 
 
 def f(x):

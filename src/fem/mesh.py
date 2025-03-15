@@ -1,10 +1,12 @@
+"""Computational meshes"""
+
 import numpy as np
 from matplotlib import pyplot as plt
 
 from abc import ABC, abstractmethod
-from finiteelement import LinearFiniteElement2d, VectorFiniteElement2d
-from functionspace import FunctionSpace
-from function import Function
+from fem.finiteelement import LinearFiniteElement2d, VectorFiniteElement2d
+from fem.functionspace import FunctionSpace
+from fem.function import Function
 
 
 class Mesh2d(ABC):

@@ -3,6 +3,13 @@
 from abc import ABC, abstractmethod
 import numpy as np
 
+__all__ = [
+    "FiniteElement2d",
+    "LinearFiniteElement2d",
+    "PolynomialFiniteElement2d",
+    "VectorFiniteElement2d",
+]
+
 
 class FiniteElement2d(ABC):
     """Abstract base class for 2d finite element basis functions on the reference triangle

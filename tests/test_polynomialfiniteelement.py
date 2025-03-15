@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from finiteelement import LinearFiniteElement2d, PolynomialFiniteElement2d
+from fem.finiteelement import LinearFiniteElement2d, PolynomialFiniteElement2d
 
 
 @pytest.fixture

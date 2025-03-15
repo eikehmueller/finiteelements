@@ -1,3 +1,5 @@
+"""Function space"""
+
 from collections.abc import Iterable
 
 

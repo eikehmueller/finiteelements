@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from finiteelement import PolynomialFiniteElement2d, VectorFiniteElement2d
+from fem.finiteelement import PolynomialFiniteElement2d, VectorFiniteElement2d
 
 
 def nodal_points(degree):

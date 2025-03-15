@@ -1,4 +1,4 @@
-from quadrature import GaussLegendreQuadrature2d
+from fem.quadrature import GaussLegendreQuadrature2d
 import pytest
 import numpy as np
 

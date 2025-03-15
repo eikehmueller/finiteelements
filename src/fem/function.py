@@ -1,5 +1,7 @@
 import numpy as np
 
+__all__ = ["Function"]
+
 
 class Function:
     def __init__(self, fs, label="unknown"):

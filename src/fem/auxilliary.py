@@ -1,5 +1,10 @@
-from finiteelement import LinearFiniteElement2d, PolynomialFiniteElement2d
+from fem.finiteelement import (
+    LinearFiniteElement2d,
+    PolynomialFiniteElement2d,
+)
 import numpy as np
+
+__all__ = ["jacobian", "save_to_vtk"]
 
 
 def jacobian(self, mesh, cell, xi):
