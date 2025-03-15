@@ -10,23 +10,23 @@ def element():
     return LinearElement()
 
 
-def test_linearelement_ndof_per_vertex(element):
+def test_ndof_per_vertex(element):
     """Check that the number of unknowns per vertex is correct"""
     assert element.ndof_per_vertex == 1
 
 
-def test_linearelement_ndof_per_facet(element):
+def test_ndof_per_facet(element):
     """Check that the number of unknowns per facet is correct"""
     element = LinearElement()
     assert element.ndof_per_facet == 0
 
 
-def test_linearelement_ndof_per_interior(element):
+def test_ndof_per_interior(element):
     """Check that the number of unknowns per interior is correct"""
     assert element.ndof_per_interior == 0
 
 
-def test_linearelement_nodal_tabulation(element):
+def test_nodal_tabulation(element):
     """Check that phi_k(xi_j) = delta_{j,k} for the linear basis functions"""
     xi = np.asarray([[0, 0], [1, 0], [0, 1]])
     evaluations = np.empty((3, 3))
@@ -38,7 +38,7 @@ def test_linearelement_nodal_tabulation(element):
     )
 
 
-def test_linearelement_gradient_tabulation(element):
+def test_gradient_tabulation(element):
     """Check that the gradient is correctly tabulated"""
     xi = np.asarray([0.2, 0.3])
     assert np.allclose(element.tabulate_gradient(xi), [[-1, -1], [1, 0], [0, 1]])

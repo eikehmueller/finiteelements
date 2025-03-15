@@ -28,7 +28,7 @@ def nodal_points(degree):
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
-def test_vectorelement_tabulation(degree):
+def test_tabulation(degree):
     element = PolynomialElement(degree)
     vectorelement = VectorElement(element)
     xi = nodal_points(degree)
@@ -41,7 +41,7 @@ def test_vectorelement_tabulation(degree):
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
-def test_vectorelement_dof_tabulation(degree):
+def test_dof_tabulation(degree):
     element = PolynomialElement(degree)
     vectorelement = VectorElement(element)
     xi = nodal_points(degree)

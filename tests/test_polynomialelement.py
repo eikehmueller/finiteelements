@@ -36,7 +36,7 @@ def nodal_points(degree):
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
-def test_polynomialelement_nodal_tabulation(degree):
+def test_nodal_tabulation(degree):
     """Check that phi_k(xi_j) = delta_{j,k} for the linear basis functions"""
     element = PolynomialElement(degree)
     xi = nodal_points(degree)
@@ -47,7 +47,7 @@ def test_polynomialelement_nodal_tabulation(degree):
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
-def test_polynomialelement_dof_tabulation(degree):
+def test_dof_tabulation(degree):
     """Check that dof-evaluation works as expected"""
     element = PolynomialElement(degree)
     # function to test
@@ -56,7 +56,7 @@ def test_polynomialelement_dof_tabulation(degree):
     assert np.allclose(fhat(xi.T), element.tabulate_dofs(fhat))
 
 
-def test_polynomialelement_agrees_with_linear(rng):
+def test_agrees_with_linear(rng):
     """Check that tabulation of polynomial basis functions of degree 1 give same
     result as for linear basis functions"""
     element_lin = LinearElement()
@@ -69,7 +69,7 @@ def test_polynomialelement_agrees_with_linear(rng):
         )
 
 
-def test_polynomialelement_agrees_with_linear_gradient(rng):
+def test_agrees_with_linear_gradient(rng):
     """Check that gradient tabulation of polynomial basis functions of degree 1 give same
     result as for linear basis functions"""
     element_lin = LinearElement()
