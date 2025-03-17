@@ -18,7 +18,6 @@ def f(x):
 element = LinearElement()
 mesh = RectangleMesh(Lx=1, Ly=1, nref=1)
 fs = FunctionSpace(mesh, element)
-
 u = Function(fs, "u")
 interpolate(f, u)
 

@@ -78,11 +78,7 @@ class FunctionSpace:
         """
         if j < 3 * self.finiteelement.ndof_per_vertex:
             # dof is associated with vertex v
-            v = self.mesh.facet2vertex[
-                self.mesh.cell2facet[cell][
-                    (j // self.finiteelement.ndof_per_vertex - 1) % 3
-                ]
-            ][0]
+            v = self.mesh.cell2vertex[cell][j // self.finiteelement.ndof_per_vertex]
             return v * self.finiteelement.ndof_per_vertex + (
                 j % self.finiteelement.ndof_per_vertex
             )

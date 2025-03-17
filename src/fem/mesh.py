@@ -1,5 +1,6 @@
 """Base class for two-dimensional triangular meshes"""
 
+from functools import cached_property
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -43,11 +44,17 @@ class Mesh:
 
         facet2vertex = [[V_a(0),V_b(0)],[V_a(1),V_b(1)],...]
 
-    Note that the three vertices of a given cell C can be obtained as
+    The three vertices of a given cell C can be obtained as
 
         V_0(C) = facet2vertex[cell2facet[C][2]]
         V_1(C) = facet2vertex[cell2facet[C][0]]
         V_2(C) = facet2vertex[cell2facet[C][1]]
+
+    and they are stored in another list given by
+
+        cell2vertex = [[V_0(0),V_1(0),V_2(0)],[V_0(1),V_1(1),V_2(1)],...]
+
+    which is derived from cell2facet and facet2cell.
 
     This class should not be instantiated since it does not contain any cells, use one of the meshes
     in utilitymesh.py instead.
@@ -75,6 +82,14 @@ class Mesh:
     def nvertices(self):
         """Number of vertices of the mesh"""
         return self.vertices.shape[0]
+
+    @cached_property
+    def cell2vertex(self):
+        """Return mapping from cells to associated vertices"""
+        return [
+            [self.facet2vertex[self.cell2facet[cell][(j - 1) % 3]][0] for j in range(3)]
+            for cell in range(self.ncells)
+        ]
 
     def _initialise_coordinates(self):
         """Initialise the piecewise linear coordinate field

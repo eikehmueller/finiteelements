@@ -36,10 +36,7 @@ def save_to_vtk(u, filename):
         print(file=f)
         print(f"CELLS {mesh.ncells} {4*mesh.ncells}", file=f)
         for cell in range(mesh.ncells):
-            vertices = [
-                mesh.facet2vertex[facet][0]
-                for facet in [mesh.cell2facet[cell][(j - 1) % 3] for j in range(3)]
-            ]
+            vertices = mesh.cell2vertex[cell]
             print(f"3 {vertices[0]} {vertices[1]} {vertices[2]}", file=f)
         print(file=f)
         print(f"CELL_TYPES {mesh.ncells}", file=f)
@@ -152,7 +149,7 @@ def visualise_mesh(mesh, filename):
                 mesh.vertices[mesh.facet2vertex[facet][0]]
                 + mesh.vertices[mesh.facet2vertex[facet][1]]
             )
-            p[(j + 1) % 3, :2] = np.asarray(mesh.vertices[mesh.facet2vertex[facet][0]])
+            p[j, :2] = np.asarray(mesh.vertices[mesh.cell2vertex[cell][j]])
         p[-1, :] = p[0, :]
         m = np.mean(p[:-1, :], axis=0)
         rho = 0.85
