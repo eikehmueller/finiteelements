@@ -61,7 +61,7 @@ class LinearElement(FiniteElement):
         """Evaluate the dofs on a given function on the reference element
 
         :arg fhat: function fhat(xhat) where xhat is a two-dimensional vector or a vector of shape
-                   (2,npoints).
+                   (2,npoints)
         """
         return fhat(self._nodal_points.T)
 
@@ -87,6 +87,14 @@ class LinearElement(FiniteElement):
         :arg xi: point xi=(x,y) at which the gradients of the basis functions are to be evaluated, can also be an
                  array of shape (npoints,2) whose columns are the points.
         """
-        return np.expand_dims(
-            np.asarray([[-1, -1], [1, 0], [0, 1]]), axis=list(range(xi.ndim))
-        )
+        if xi.ndim == 1:
+            return np.asarray([[-1, -1], [1, 0], [0, 1]])
+        else:
+            return np.repeat(
+                np.expand_dims(
+                    np.asarray([[-1, -1], [1, 0], [0, 1]]),
+                    axis=list(range(xi.ndim - 1)),
+                ),
+                [xi.shape[0]],
+                axis=0,
+            )

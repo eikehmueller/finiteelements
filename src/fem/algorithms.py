@@ -54,3 +54,38 @@ def assemble_rhs(f, r, quad):
         r.data[j_g_r] += np.einsum(
             "q,qi,q,q->i", w_q, phi, f_X, np.abs(np.linalg.det(J))
         )
+
+
+def assemble_lhs(fs, quad):
+    """Assemble LHS bilinear form into matrix
+
+    :arg fs: function space
+    :arg quad: quadrature rule
+    """
+    mesh = fs.mesh
+    element = fs.finiteelement
+    stiffness_matrix = np.zeros((fs.ndof, fs.ndof))
+    for cell in range(mesh.ncells):
+        # global indices of function space
+        j_g = fs.local2global(cell, range(element.ndof))
+        x_q_hat = np.asarray(quad.nodes)
+        w_q = quad.weights
+        grad_phi = element.tabulate_gradient(x_q_hat)
+        phi = element.tabulate(x_q_hat)
+        J = jacobian(mesh, cell, x_q_hat)
+        JT_J_inv = np.linalg.inv(np.einsum("qji,qjk->qik", J, J))
+        local_matrix = np.einsum(
+            "q,qjl,qlm,qkm,q->jk",
+            w_q,
+            grad_phi,
+            JT_J_inv,
+            grad_phi,
+            np.abs(np.linalg.det(J)),
+        ) + np.einsum(
+            "qj,qk,q->jk",
+            phi,
+            phi,
+            np.abs(np.linalg.det(J)),
+        )
+        stiffness_matrix[np.ix_(j_g, j_g)] += local_matrix
+    return stiffness_matrix
