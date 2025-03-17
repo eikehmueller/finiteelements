@@ -40,27 +40,7 @@ class LinearElement(FiniteElement):
     def __init__(self):
         """Initialise new instance"""
         super().__init__()
-        self._nodal_points = [[0, 0], [1, 0], [0, 1]]
-
-    def tabulate_dofs(self, fhat):
-        """Evaluate the dofs on a given function on the reference element
-
-        :arg fhat: function fhat(xhat) where xhat is a two-dimensional vector
-        """
-        dof_vector = np.empty(3)
-        for j in range(3):
-            dof_vector[j] = fhat(np.asarray(self._nodal_points[j]))
-        return dof_vector
-
-    def tabulate(self, xi):
-        """Evaluate all basis functions at a point inside the reference cell
-
-        Returns a vector of length 3 with the evaluation of all three basis functions.
-
-        :arg xi: point xi=(x,y) at which the basis functions are to be evaluated.
-        """
-        x, y = xi
-        return np.asarray([1 - x - y, x, y])
+        self._nodal_points = np.asarray([[0, 0], [1, 0], [0, 1]])
 
     @property
     def ndof_per_interior(self):
@@ -77,12 +57,35 @@ class LinearElement(FiniteElement):
         """Return number of unknowns associated with each vertex"""
         return 1
 
-    def tabulate_gradient(self, xi):
-        """Evaluate the gradients of all basis function at a point inside the reference cell
+    def tabulate_dofs(self, fhat):
+        """Evaluate the dofs on a given function on the reference element
 
-        Returns an vector of shape (3,2) with the evaluation of the gradients of all three
-        basis functions.
-
-        :arg xi: point xi=(x,y) at which the gradients of the basis functions are to be evaluated.
+        :arg fhat: function fhat(xhat) where xhat is a two-dimensional vector
         """
-        return np.asarray([[-1, -1], [1, 0], [0, 1]])
+        return fhat(self._nodal_points.T)
+
+    def tabulate(self, xi):
+        """Evaluate all basis functions at points inside the reference cell
+
+        Returns a vector of length 3 with the evaluation of all three basis functions.
+        If xi is a matrix of shape (npoints,2) whose columns represent points, then
+        an array of shape (npoints,3) will be returned
+
+        :arg xi: point xi=(x,y) at which the basis functions are to be evaluated, can also be an
+                 array of shape (npoints,2) whose columns are the points.
+        """
+        return np.asarray([1 - xi[..., 0] - xi[..., 1], xi[..., 0], xi[..., 1]]).T
+
+    def tabulate_gradient(self, xi):
+        """Evaluate the gradients of all basis function at point inside the reference cell
+
+        Returns an matrux of shape (3,2) with the evaluation of the gradients of all three
+        basis functions. If xi is a matrix of shape (npoints,2) whose columns represent points, then
+        an array of shape (npoints,3,2)
+
+        :arg xi: point xi=(x,y) at which the gradients of the basis functions are to be evaluated, can also be an
+                 array of shape (npoints,2) whose columns are the points.
+        """
+        return np.expand_dims(
+            np.asarray([[-1, -1], [1, 0], [0, 1]]), axis=list(range(xi.ndim))
+        )

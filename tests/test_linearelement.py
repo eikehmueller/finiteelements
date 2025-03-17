@@ -38,10 +38,28 @@ def test_nodal_tabulation(element):
     )
 
 
+def test_nodal_tabulation_vectorised(element):
+    """Check that phi_k(xi_j) = delta_{j,k} for the linear basis functions"""
+    xi = np.asarray([[0, 0], [1, 0], [0, 1]])
+    assert np.allclose(
+        element.tabulate(xi),
+        np.eye(3),
+    )
+
+
 def test_gradient_tabulation(element):
     """Check that the gradient is correctly tabulated"""
     xi = np.asarray([0.2, 0.3])
     assert np.allclose(element.tabulate_gradient(xi), [[-1, -1], [1, 0], [0, 1]])
+
+
+def test_gradient_tabulation_vectorised(element):
+    """Check that the gradient is correctly tabulated"""
+    xi = np.asarray([[0.2, 0.3], [0.1, 0.6]])
+    assert np.allclose(
+        element.tabulate_gradient(xi),
+        [[[-1, -1], [1, 0], [0, 1]], [[-1, -1], [1, 0], [0, 1]]],
+    )
 
 
 def test_linearelement_dof_tabulation(element):

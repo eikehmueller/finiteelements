@@ -37,13 +37,21 @@ def nodal_points(degree):
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
 def test_nodal_tabulation(degree):
-    """Check that phi_k(xi_j) = delta_{j,k} for the linear basis functions"""
+    """Check that phi_k(xi_j) = delta_{j,k} for all basis functions"""
     element = PolynomialElement(degree)
     xi = nodal_points(degree)
     evaluations = np.empty((element.ndof, element.ndof))
     for j in range(element.ndof):
         evaluations[j, :] = element.tabulate(xi[j, :])
     assert np.allclose(evaluations, np.eye(element.ndof))
+
+
+@pytest.mark.parametrize("degree", [1, 2, 3, 4])
+def test_nodal_tabulation_vectorised(degree):
+    """Check that phi_k(xi_j) = delta_{j,k} for all basis functions"""
+    element = PolynomialElement(degree)
+    xi = nodal_points(degree)
+    assert np.allclose(element.tabulate(xi), np.eye(element.ndof))
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
@@ -69,6 +77,16 @@ def test_agrees_with_linear(rng):
         )
 
 
+def test_agrees_with_linear_vectorised(rng):
+    """Check that tabulation of polynomial basis functions of degree 1 give same
+    result as for linear basis functions"""
+    element_lin = LinearElement()
+    element_poly = PolynomialElement(1)
+    nsamples = 32
+    xi = rng.uniform(size=(nsamples, 2))
+    assert np.allclose(element_lin.tabulate(xi), element_poly.tabulate(xi))
+
+
 def test_agrees_with_linear_gradient(rng):
     """Check that gradient tabulation of polynomial basis functions of degree 1 give same
     result as for linear basis functions"""
@@ -81,3 +99,16 @@ def test_agrees_with_linear_gradient(rng):
             element_lin.tabulate_gradient(xi[j, :]),
             element_poly.tabulate_gradient(xi[j, :]),
         )
+
+
+def test_agrees_with_linear_gradient_vectorised(rng):
+    """Check that gradient tabulation of polynomial basis functions of degree 1 give same
+    result as for linear basis functions"""
+    element_lin = LinearElement()
+    element_poly = PolynomialElement(1)
+    nsamples = 32
+    xi = rng.uniform(size=(nsamples, 2))
+    assert np.allclose(
+        element_lin.tabulate_gradient(xi),
+        element_poly.tabulate_gradient(xi),
+    )

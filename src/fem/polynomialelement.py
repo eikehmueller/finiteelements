@@ -108,13 +108,14 @@ class PolynomialElement(FiniteElement):
         if grad:
             mat = np.empty([npoints, len(self._powers), 2])
             for col, (a, b) in enumerate(self._powers):
-                mat[:, col, 0] = a * xi[..., 0] ** (a - 1) * xi[..., 1] ** b
-                mat[:, col, 1] = b * xi[..., 0] ** a * xi[..., 1] ** (b - 1)
+                mat[:, col, 0] = a * xi[..., 0] ** max(0, (a - 1)) * xi[..., 1] ** b
+                mat[:, col, 1] = b * xi[..., 0] ** a * xi[..., 1] ** max(0, (b - 1))
         else:
             mat = np.empty([npoints, len(self._powers)])
+            print(xi.shape)
             for col, (a, b) in enumerate(self._powers):
                 mat[:, col] = xi[..., 0] ** a * xi[..., 1] ** b
-        return np.nan_to_num(mat, copy=False)
+        return mat
 
     @property
     def ndof_per_interior(self):
@@ -149,7 +150,7 @@ class PolynomialElement(FiniteElement):
         """
         mat = np.squeeze(
             self._vandermonde_matrix(
-                xi if xi.ndim == 2 else np.expand_dims(xi, 0), grad=False
+                np.expand_dims(xi, axis=list(range(2 - xi.ndim))), grad=False
             )
             @ self._coefficients
         )
@@ -169,7 +170,7 @@ class PolynomialElement(FiniteElement):
             np.einsum(
                 "ilk,lj->ijk",
                 self._vandermonde_matrix(
-                    xi if xi.ndim == 2 else np.expand_dims(xi, 0), grad=True
+                    np.expand_dims(xi, axis=list(range(2 - xi.ndim))), grad=True
                 ),
                 self._coefficients,
             )

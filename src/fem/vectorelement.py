@@ -81,9 +81,13 @@ class VectorElement(FiniteElement):
         :arg xi: point xi=(x,y) at which the basis functions are to be evaluated.
         """
         scalar_tabulation = self._finiteelement.tabulate(xi)
-        value = np.zeros((self.ndof, 2))
+        value = (
+            np.zeros((self.ndof, 2))
+            if xi.ndim == 1
+            else np.zeros((xi.shape[0], self.ndof, 2))
+        )
         for dim in (0, 1):
-            value[dim::2, dim] = scalar_tabulation[:]
+            value[..., dim::2, dim] = scalar_tabulation
         return value
 
     def tabulate_gradient(self, xi):
@@ -94,9 +98,12 @@ class VectorElement(FiniteElement):
 
         :arg xi: point xi=(x,y) at which the gradients of the basis functions are to be evaluated.
         """
-        scalar_grad = self._finiteelement.evaluate_grad(xi)
-        grad = np.zeros((self.ndof, 2, 2))
-
+        scalar_grad = self._finiteelement.tabulate_gradient(xi)
+        grad = (
+            np.zeros((self.ndof, 2, 2))
+            if xi.ndim == 1
+            else np.zeros((xi.shape[0], self.ndof, 2, 2))
+        )
         for dim in (0, 1):
-            grad[dim::2, dim, :] = scalar_grad[:, :]
+            grad[..., dim::2, dim, :] = scalar_grad
         return grad
