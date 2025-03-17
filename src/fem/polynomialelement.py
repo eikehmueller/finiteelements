@@ -43,49 +43,78 @@ class PolynomialElement(FiniteElement):
         # List with powers
         self._powers = []
         # List with nodal points
-        self._nodal_points = []
+        nodal_points = []
         # Spacing of nodal points
         h = 1 / self.degree
 
         # nodes associated with vertices
         # vertex 0
         self._powers.append([0, 0])
-        self._nodal_points.append([0, 0])
+        nodal_points.append([0, 0])
         # vertex 1
         self._powers.append([self.degree, 0])
-        self._nodal_points.append([1, 0])
+        nodal_points.append([1, 0])
         # vertex 2
         self._powers.append([0, self.degree])
-        self._nodal_points.append([0, 1])
+        nodal_points.append([0, 1])
         # nodes associated with facets
         # facet 0
         for j in range(1, self.degree):
             self._powers.append([self.degree - j, j])
-            self._nodal_points.append([(self.degree - j) * h, j * h])
+            nodal_points.append([(self.degree - j) * h, j * h])
         # facet 1
         for j in range(1, self.degree):
             self._powers.append([0, self.degree - j])
-            self._nodal_points.append([0, (self.degree - j) * h])
+            nodal_points.append([0, (self.degree - j) * h])
         # facet 2
         for j in range(1, self.degree):
             self._powers.append([j, 0])
-            self._nodal_points.append([j * h, 0])
+            nodal_points.append([j * h, 0])
         # nodes associated with interior
         for b in range(1, self.degree - 1):
             for a in range(1, self.degree - b):
                 self._powers.append([a, b])
-                self._nodal_points.append([a * h, b * h])
-        # Construct the matrix A such that
-        #    A_{row,col} = x_j^a*y_k^b
-        # where the row corresponds to the index of the nodal point (x_j,x_k) and
-        # the column to the power (a,b) that the nodal point is raised to
-        vandermonde_matrix = np.empty([len(self._nodal_points), len(self._powers)])
-        for row, (x, y) in enumerate(self._nodal_points):
-            for col, (a, b) in enumerate(self._powers):
-                vandermonde_matrix[row, col] = x**a * y**b
+                nodal_points.append([a * h, b * h])
+        self._nodal_points = np.asarray(nodal_points)
+        vandermonde_matrix = self._vandermonde_matrix(self._nodal_points)
         # Solve A.C = Id for the coefficient matrix C. The k-th column of C contains
         # the polynomial coefficients for the k-th basis function
         self._coefficients = np.linalg.inv(vandermonde_matrix)
+
+    def _vandermonde_matrix(self, xi, grad=False):
+        """Construct the Vandermonde matrix or its gradient
+
+        If grad=False, compute the Vandermonde matrix V(xi)
+
+            V_{i,j}(xi) = x_i^a(j)*y_i^b(j)
+
+        where the row i corresponds to the index of the point xi_i = (x_i,y_i) and
+        the column j to the power (a(j),b(j)) that the point xi_i is raised to.
+        The resulting matrix has the shape (npoints, ndof) where npoints is the number of points
+        in xi.
+
+        If grad=True, compute the gradient grad V(xi) of the Vandermonde matrix with
+
+            grad V_{i,j,k} = d V_{i,j}(xi) / dx_k
+
+        The resulting tensor has the shape (npoints, ndof,2).
+
+        :arg xi: array of shape (npoints, 2) containing the points for which the Vandermonde matrix
+                 is to be calculated
+        :arg grad: compute gradient?
+        """
+
+        npoints = xi.shape[0]
+        if grad:
+            mat = np.empty([npoints, len(self._powers), 2])
+            for col, (a, b) in enumerate(self._powers):
+                mat[:, col, 0] = a * xi[..., 0] ** (a - 1) * xi[..., 1] ** b
+                mat[:, col, 1] = b * xi[..., 0] ** a * xi[..., 1] ** (b - 1)
+        else:
+            mat = np.empty([npoints, len(self._powers)])
+            for col, (a, b) in enumerate(self._powers):
+                mat[:, col] = xi[..., 0] ** a * xi[..., 1] ** b
+        return np.nan_to_num(mat, copy=False)
 
     @property
     def ndof_per_interior(self):
@@ -107,41 +136,42 @@ class PolynomialElement(FiniteElement):
 
         :arg fhat: function fhat(xhat) where xhat is a two-dimensional vector
         """
-        dof_vector = np.empty(self.ndof)
-        for j in range(self.ndof):
-            dof_vector[j] = fhat(np.asarray(self._nodal_points[j]))
-        return dof_vector
+        return fhat(self._nodal_points.T)
 
     def tabulate(self, xi):
         """Evaluate all basis functions at a point inside the reference cell
 
-        Returns a vector of length ndof with the evaluation of all basis functions.
+        Returns a vector of length ndof with the evaluation of all basis functions or a matrix
+        of shape (npoints,ndof) if xi contains several points.
 
-        :arg xi: point xi=(x,y) at which the basis functions are to be evaluated.
+        :arg xi: point xi=(x,y) at which the basis functions are to be evaluated; can also be a
+                 matrix of shape (npoints,2).
         """
-
-        x, y = xi
-        value = np.zeros(self.ndof)
-        for k in range(self.ndof):
-            for coefficient, (a, b) in zip(self._coefficients[:, k], self._powers):
-                value[k] += coefficient * x**a * y**b
-        return value
+        mat = np.squeeze(
+            self._vandermonde_matrix(
+                xi if xi.ndim == 2 else np.expand_dims(xi, 0), grad=False
+            )
+            @ self._coefficients
+        )
+        return mat
 
     def tabulate_gradient(self, xi):
         """Evaluate the gradients of all basis functions at a point inside the reference cell
 
-        Returns an vector of shape (ndof,2) with the evaluation of the gradients of all
-        basis functions.
+        Returns an matrix of shape (ndof,2) with the evaluation of the gradients of all
+        basis functions. If xi is a matrix containing several points then the matrix that is
+        returned is of shape (npoints,ndof,2)
 
-        :arg xi: point xi=(x,y) at which the gradients of the basis functions are to be evaluated.
+        :arg xi: point xi=(x,y) at which the gradients of the  basis functions are to be evaluated;
+                 can also be a matrix of shape (npoints,2).
         """
-
-        x, y = xi
-        grad = np.zeros((self.ndof, 2))
-        for k in range(self.ndof):
-            for coefficient, (a, b) in zip(self._coefficients[:, k], self._powers):
-                if a > 0:
-                    grad[k, 0] += coefficient * a * x ** (a - 1) * y**b
-                if b > 0:
-                    grad[k, 1] += coefficient * b * x**a * y ** (b - 1)
-        return grad
+        mat = np.squeeze(
+            np.einsum(
+                "ilk,lj->ijk",
+                self._vandermonde_matrix(
+                    xi if xi.ndim == 2 else np.expand_dims(xi, 0), grad=True
+                ),
+                self._coefficients,
+            )
+        )
+        return mat
