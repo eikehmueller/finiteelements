@@ -1,12 +1,14 @@
 """Some utilities for visualisation etc."""
 
+import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib.patches import Polygon
+from matplotlib.collections import PatchCollection
+
 from fem.linearelement import LinearElement
 from fem.polynomialelement import PolynomialElement
 
-import numpy as np
-from matplotlib import pyplot as plt
-
-__all__ = ["save_to_vtk", "visualise_mesh"]
+__all__ = ["save_to_vtk", "visualise_mesh", "visualise_element"]
 
 
 def save_to_vtk(u, filename):
@@ -201,4 +203,88 @@ def visualise_mesh(mesh, filename):
                 color="black",
             )
     axs[1, 1].set_title("local vertex- and facet-index")
+    plt.savefig(filename, bbox_inches="tight")
+
+
+def balanced_factorisation(n):
+    """factorise n = a*b such that a+b is minimal and a<b
+
+    :arg n: number to factorise
+    """
+    s = dict()
+    for a in range(1, n + 1):
+        if (n // a) * a == n:
+            s[(a, n // a)] = a + n // a
+    return min(s, key=s.get)
+
+
+def visualise_element(element, filename):
+    """Visualise the basis functions of a finite element
+
+    :arg element: finite element
+    :arg filename: name of file that the visualisation is saved to
+    """
+
+    plt.clf()
+    ndof = element.ndof
+    nrows, ncols = balanced_factorisation(ndof)
+    fig, axs = plt.subplots(nrows, ncols)
+    h = 0.01
+    X = np.arange(0, 1 + h / 2, h)
+    Y = np.arange(0, 1 + h / 2, h)
+    X, Y = np.meshgrid(X, Y)
+
+    xi = np.asarray((X.flatten(), Y.flatten())).T
+    Z = element.tabulate(xi).reshape((*X.shape, ndof))
+
+    h_c = 0.1
+    X_c = np.arange(0, 1 + h_c / 2, h_c)
+    Y_c = np.arange(0, 1 + h_c / 2, h_c)
+    X_c, Y_c = np.meshgrid(X_c, Y_c)
+    xi_c = np.asarray((X_c.flatten(), Y_c.flatten())).T
+    gradZ = element.tabulate_gradient(xi_c).reshape((*X_c.shape, ndof, 2))
+    for j in range(ndof):
+        row = j // ncols
+        col = j % ncols
+        if nrows == 1:
+            ax = axs[col]
+        else:
+            ax = axs[row, col]
+        if col > 0:
+            ax.set_yticks([])
+        if row < nrows - 1:
+            ax.set_xticks([])
+        ax.set_aspect(1)
+        ax.set_xlim(-0.1, 1.1)
+        ax.set_ylim(-0.1, 1.1)
+        ax.set_title(j)
+        ax.contourf(X, Y, Z[..., j], levels=100, vmin=0, vmax=1)
+        ax.quiver(X_c, Y_c, gradZ[..., j, 0], gradZ[..., j, 1], color="red")
+        sigma = 2
+        mask = Polygon(
+            [[1 + sigma, -sigma], [-sigma, 1 + sigma], [1 + sigma, 1 + sigma]],
+            color="white",
+            linewidth=4,
+        )
+        p = PatchCollection([mask], color="white", zorder=2)
+        ax.add_collection(p)
+
+        ax.plot(
+            element._nodal_points[:, 0],
+            element._nodal_points[:, 1],
+            linewidth=0,
+            markersize=4,
+            markerfacecolor="white",
+            marker="o",
+            color="red",
+        )
+        ax.plot(
+            element._nodal_points[j, 0],
+            element._nodal_points[j, 1],
+            linewidth=0,
+            markersize=4,
+            marker="o",
+            color="red",
+        )
+
     plt.savefig(filename, bbox_inches="tight")
