@@ -6,7 +6,7 @@ from fem.utilitymeshes import RectangleMesh
 from fem.linearelement import LinearElement
 from fem.polynomialelement import PolynomialElement
 from fem.functionspace import FunctionSpace
-from fem.function import Function, DualFunction
+from fem.function import Function, CoFunction
 from fem.utilities import save_to_vtk, visualise_mesh, visualise_element
 from fem.algorithms import interpolate, assemble_rhs
 from fem.quadrature import GaussLegendreQuadrature
@@ -31,7 +31,7 @@ element = PolynomialElement(2)
 visualise_element(element, "element.pdf")
 
 quad = GaussLegendreQuadrature(3)
-r = DualFunction(fs)
+r = CoFunction(fs)
 assemble_rhs(f, r, quad)
 xi = np.asarray([0.4, 0.3])
 from fem.auxilliary import jacobian
