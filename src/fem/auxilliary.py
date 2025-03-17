@@ -5,7 +5,7 @@ import numpy as np
 __all__ = ["jacobian"]
 
 
-def jacobian(self, mesh, cell, xi):
+def jacobian(mesh, cell, xi):
     """Calculate Jacobian in a given cell for quadrature points in reference triangle
 
     :arg mesh: underlying mesh
@@ -16,4 +16,4 @@ def jacobian(self, mesh, cell, xi):
     element = fs.finiteelement
     gradient = element.tabulate_gradient(xi)
     j_g = fs.local2global(cell, range(element.ndof))
-    return np.dot(self.coordinates.data[j_g], gradient)
+    return np.einsum("j,...jkl->...kl", mesh.coordinates.data[j_g], gradient)

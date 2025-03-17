@@ -1,11 +1,13 @@
 import numpy as np
 
+from fem.auxilliary import jacobian
+
 
 def interpolate(f, u):
     """Interpolate a function to a finite element function
 
     :arg f: function, needs to be callable with f(x) where x is a 2-vector
-    :arg u: finite element function
+    :arg u: finite element function, instance of Function
     """
     fs = u.functionspace
     mesh = fs.mesh
@@ -15,7 +17,40 @@ def interpolate(f, u):
     for cell in range(mesh.ncells):
         j_g_coord = fs_coord.local2global(cell, range(element_coord.ndof))
         x_dof_vector = mesh.coordinates.data[j_g_coord]
-        f_hat = lambda xhat: f(np.dot(x_dof_vector, element_coord.tabulate(xhat)))
+
+        # local function
+        f_hat = lambda x_hat, x_dof_vector=x_dof_vector: f(
+            np.einsum("j,ijk->ik", x_dof_vector, element_coord.tabulate(x_hat.T)).T
+        )
+
         u_dof_vector = element.tabulate_dofs(f_hat)
         j_g_u = fs.local2global(cell, range(element.ndof))
         u.data[j_g_u] = u_dof_vector[:]
+
+
+def assemble_rhs(f, r, quad):
+    """Assemble function into RHS
+
+    :arg f: function, needs to be callable with f(x) where x is a 2-vector
+    :arg r: dual function, must be an instance of DualFunction
+    :arg quad: quadrature rule
+    """
+    fs = r.functionspace
+    mesh = fs.mesh
+    fs_coord = mesh.coordinates.functionspace
+    element = fs.finiteelement
+    element_coord = fs_coord.finiteelement
+    for cell in range(mesh.ncells):
+        # global indices of coordinate field
+        j_g_coord = fs_coord.local2global(cell, range(element_coord.ndof))
+        # global indices of RHS
+        j_g_r = fs.local2global(cell, range(element.ndof))
+        x_dof_vector = mesh.coordinates.data[j_g_coord]
+        x_q_hat = np.asarray(quad.nodes)
+        w_q = quad.weights
+        f_X = f(np.dot(x_dof_vector, element_coord.tabulate(x_q_hat)).T)
+        phi = element.tabulate(x_q_hat)
+        J = jacobian(mesh, cell, x_q_hat)
+        r.data[j_g_r] += np.einsum(
+            "q,qi,q,q->i", w_q, phi, f_X, np.abs(np.linalg.det(J))
+        )

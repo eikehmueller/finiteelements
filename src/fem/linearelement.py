@@ -60,7 +60,8 @@ class LinearElement(FiniteElement):
     def tabulate_dofs(self, fhat):
         """Evaluate the dofs on a given function on the reference element
 
-        :arg fhat: function fhat(xhat) where xhat is a two-dimensional vector
+        :arg fhat: function fhat(xhat) where xhat is a two-dimensional vector or a vector of shape
+                   (2,npoints).
         """
         return fhat(self._nodal_points.T)
 

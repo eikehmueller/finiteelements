@@ -112,7 +112,6 @@ class PolynomialElement(FiniteElement):
                 mat[:, col, 1] = b * xi[..., 0] ** a * xi[..., 1] ** max(0, (b - 1))
         else:
             mat = np.empty([npoints, len(self._powers)])
-            print(xi.shape)
             for col, (a, b) in enumerate(self._powers):
                 mat[:, col] = xi[..., 0] ** a * xi[..., 1] ** b
         return mat
