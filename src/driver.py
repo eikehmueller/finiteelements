@@ -8,7 +8,7 @@ from fem.polynomialelement import PolynomialElement
 from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
 from fem.utilities import save_to_vtk
-from fem.algorithms import interpolate, assemble_rhs, assemble_lhs
+from fem.algorithms import interpolate, assemble_rhs, assemble_lhs, two_norm
 from fem.quadrature import GaussLegendreQuadrature
 
 
@@ -17,11 +17,12 @@ def f(x):
     return np.cos(2 * np.pi * x[0]) * np.cos(4 * np.pi * x[1])
 
 
+nref = 5
+
 element = LinearElement()
-mesh = RectangleMesh(Lx=1, Ly=1, nref=6)
+mesh = RectangleMesh(Lx=1, Ly=1, nref=nref)
 fs = FunctionSpace(mesh, element)
 
-element = PolynomialElement(2)
 quad = GaussLegendreQuadrature(3)
 
 r = CoFunction(fs)
@@ -40,6 +41,10 @@ interpolate(f, u_exact)
 
 error = Function(fs, "error")
 error.data[:] = u_numerical.data[:] - u_exact.data[:]
+
+error_norm = two_norm(error, quad)
+
+print(f"nref = {nref}, error = {error_norm}")
 
 save_to_vtk(u_exact, "u_exact.vtk")
 save_to_vtk(u_numerical, "u_numerical.vtk")

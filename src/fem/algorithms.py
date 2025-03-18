@@ -2,6 +2,8 @@ import numpy as np
 
 from fem.auxilliary import jacobian
 
+__all__ = ["interpolate", "assemble_rhs", "assemble_lhs", "two_norm"]
+
 
 def interpolate(f, u):
     """Interpolate a function to a finite element function
@@ -90,3 +92,33 @@ def assemble_lhs(fs, quad):
         )
         stiffness_matrix[np.ix_(j_g, j_g)] += local_matrix
     return stiffness_matrix
+
+
+def two_norm(u, quad):
+    """Compute L2 norm of a function
+
+    :arg u: finite element function
+    :arg quad: quadrature rule
+    """
+    fs = u.functionspace
+    mesh = fs.mesh
+    element = fs.finiteelement
+    stiffness_matrix = np.zeros((fs.ndof, fs.ndof))
+    nrm = 0
+    for cell in range(mesh.ncells):
+        # global indices of function space
+        j_g = fs.local2global(cell, range(element.ndof))
+        x_q_hat = np.asarray(quad.nodes)
+        w_q = quad.weights
+        phi = element.tabulate(x_q_hat)
+        J = jacobian(mesh, cell, x_q_hat)
+        local_matrix = np.einsum(
+            "q,qj,qk,q->jk",
+            w_q,
+            phi,
+            phi,
+            np.abs(np.linalg.det(J)),
+        )
+        w = u.data[j_g]
+        nrm += w @ local_matrix @ w
+    return np.sqrt(nrm)
