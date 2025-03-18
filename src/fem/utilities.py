@@ -8,7 +8,7 @@ from matplotlib.collections import PatchCollection
 from fem.linearelement import LinearElement
 from fem.polynomialelement import PolynomialElement
 
-__all__ = ["save_to_vtk", "visualise_mesh", "visualise_element"]
+__all__ = ["save_to_vtk", "visualise_mesh", "visualise_element", "visualise_quadrature"]
 
 
 def save_to_vtk(u, filename):
@@ -287,4 +287,33 @@ def visualise_element(element, filename):
             color="red",
         )
 
+    plt.savefig(filename, bbox_inches="tight")
+
+
+def visualise_quadrature(quad, filename):
+    """Visualise quadrature rule
+
+    :arg quad: quadrature rule to visualise
+    :arg filename: name of file to write to
+    """
+    plt.clf()
+    mask = Polygon(
+        [[0, 0], [1, 0], [0, 1]],
+        color="lightgray",
+        linewidth=2,
+    )
+    ax = plt.gca()
+    ax.set_aspect("equal")
+    ax.set_xlim(-0.1, 1.1)
+    ax.set_ylim(-0.1, 1.1)
+    p = PatchCollection([mask], color="lightgray")
+    ax.add_collection(p)
+    plt.plot(
+        quad.nodes[:, 0],
+        quad.nodes[:, 1],
+        linewidth=0,
+        marker="o",
+        markersize=1,
+        color="blue",
+    )
     plt.savefig(filename, bbox_inches="tight")

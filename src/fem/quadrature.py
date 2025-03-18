@@ -19,29 +19,36 @@ class Quadrature(ABC):
     def weights(self):
         """Return quadrature weights"""
 
+    @property
+    @abstractmethod
+    def degree_of_precision(self):
+        """Degree of precision, i.e. highest polynomial degree that
+        can be integrated exactly"""
+
 
 class GaussLegendreQuadrature(Quadrature):
     """Gauss-Legendre quadrature on reference triangle
 
     The tensor-product of one-dimensional Gauss-Legendre quadrature of given degree is
     mapped from [-1,+1] x [-1,+1] to the reference triangle with the Duffy transform.
-    Note that for a given degree p, polynomials of degree 2*p-1 or less are integrated
-    exactly.
+    Note that for a given number of points n, polynomials of degree 2*n-1 or less are
+    integrated exactly.
     """
 
-    def __init__(self, degree):
+    def __init__(self, npoints):
         """Initialise a new instance
 
-        :arg degree: polynomial degree
+        :arg npoints: number of 1d quadrature points
         """
         super().__init__()
-        assert degree >= 1
-        self._degree = degree
-        xi1d, weights1d = np.polynomial.legendre.leggauss(degree)
+        assert npoints >= 1
+        self._npoints = npoints
+        xi_x, weights_x = np.polynomial.legendre.leggauss(npoints)
+        xi_y, weights_y = np.polynomial.legendre.leggauss(npoints + 1)
         xi = []
         weights = []
-        for x, w_x in zip(xi1d, weights1d):
-            for y, w_y in zip(xi1d, weights1d):
+        for x, w_x in zip(xi_x, weights_x):
+            for y, w_y in zip(xi_y, weights_y):
                 x_sq = 1 / 2 * (1 + x)
                 y_sq = 1 / 2 * (1 + y)
                 xi.append([x_sq, (1 - x_sq) * y_sq])
@@ -58,3 +65,9 @@ class GaussLegendreQuadrature(Quadrature):
     def weights(self):
         """Return quadrature weights"""
         return self._weights
+
+    @property
+    def degree_of_precision(self):
+        """Degree of precision, i.e. highest polynomial degree that
+        can be integrated exactly"""
+        return 2 * self._npoints - 1

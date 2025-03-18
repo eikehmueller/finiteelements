@@ -7,7 +7,12 @@ from fem.linearelement import LinearElement
 from fem.polynomialelement import PolynomialElement
 from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
-from fem.utilities import save_to_vtk, visualise_mesh, visualise_element
+from fem.utilities import (
+    save_to_vtk,
+    visualise_mesh,
+    visualise_element,
+    visualise_quadrature,
+)
 from fem.algorithms import interpolate, assemble_rhs, assemble_lhs
 from fem.quadrature import GaussLegendreQuadrature
 
@@ -31,6 +36,8 @@ element = PolynomialElement(2)
 visualise_element(element, "element.pdf")
 
 quad = GaussLegendreQuadrature(3)
+visualise_quadrature(quad, "quadrature.pdf")
+
 r = CoFunction(fs)
 assemble_rhs(f, r, quad)
 xi = np.asarray([0.4, 0.3])
