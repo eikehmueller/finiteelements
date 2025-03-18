@@ -4,7 +4,6 @@ import numpy as np
 
 from fem.utilitymeshes import RectangleMesh
 from fem.linearelement import LinearElement
-from fem.polynomialelement import PolynomialElement
 from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
 from fem.utilities import save_to_vtk
