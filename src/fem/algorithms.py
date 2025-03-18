@@ -82,7 +82,8 @@ def assemble_lhs(fs, quad):
             grad_phi,
             np.abs(np.linalg.det(J)),
         ) + np.einsum(
-            "qj,qk,q->jk",
+            "q,qj,qk,q->jk",
+            w_q,
             phi,
             phi,
             np.abs(np.linalg.det(J)),
