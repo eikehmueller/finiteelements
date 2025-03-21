@@ -1,8 +1,9 @@
 import numpy as np
+from petsc4py import PETSc
 
 from fem.auxilliary import jacobian
 
-__all__ = ["interpolate", "assemble_rhs", "assemble_lhs", "two_norm"]
+__all__ = ["interpolate", "assemble_rhs", "sparsity_lhs", "assemble_lhs", "two_norm"]
 
 
 def interpolate(f, u):
@@ -58,15 +59,44 @@ def assemble_rhs(f, r, quad):
         )
 
 
-def assemble_lhs(fs, quad):
+def sparsity_lhs(fs):
+    """Sparsity structure for stiffness matrix
+
+    :arg fs: function space
+    """
+    mesh = fs.mesh
+    element = fs.finiteelement
+    indices = [set() for _ in range(fs.ndof)]
+    for cell in range(mesh.ncells):
+        # global indices of function space
+        j_g = fs.local2global(cell, range(element.ndof))
+        for j in j_g:
+            indices[j].update(set(j_g))
+    row_start = [0]
+    col_indices = []
+    for row in indices:
+        col_indices += sorted(row)
+        row_start.append(len(col_indices))
+    return row_start, col_indices
+
+
+def assemble_lhs(fs, quad, sparse=False):
     """Assemble LHS bilinear form into matrix
 
     :arg fs: function space
     :arg quad: quadrature rule
+    :arg sparse: assemble sparse matrix in PETSc format
     """
     mesh = fs.mesh
     element = fs.finiteelement
-    stiffness_matrix = np.zeros((fs.ndof, fs.ndof))
+    if sparse:
+        row_start, col_indices = sparsity_lhs(fs)
+        stiffness_matrix = PETSc.Mat().createAIJ(
+            (fs.ndof, fs.ndof), bsize=1, csr=(row_start, col_indices)
+        )
+
+    else:
+        stiffness_matrix = np.zeros((fs.ndof, fs.ndof))
     for cell in range(mesh.ncells):
         # global indices of function space
         j_g = fs.local2global(cell, range(element.ndof))
@@ -90,7 +120,12 @@ def assemble_lhs(fs, quad):
             phi,
             np.abs(np.linalg.det(J)),
         )
-        stiffness_matrix[np.ix_(j_g, j_g)] += local_matrix
+        if sparse:
+            stiffness_matrix.setValues(j_g, j_g, local_matrix, addv=True)
+        else:
+            stiffness_matrix[np.ix_(j_g, j_g)] += local_matrix
+    if sparse:
+        stiffness_matrix.assemble()
     return stiffness_matrix
 
 
