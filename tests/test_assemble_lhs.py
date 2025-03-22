@@ -1,9 +1,6 @@
 import numpy as np
 import pytest
 
-import petsc4py
-
-petsc4py.init()
 
 from fem.polynomialelement import PolynomialElement
 from fem.utilitymeshes import RectangleMesh, TriangleMesh
