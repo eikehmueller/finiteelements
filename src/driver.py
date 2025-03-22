@@ -1,6 +1,12 @@
 """Main program"""
 
+import sys
 import numpy as np
+
+import petsc4py
+
+petsc4py.init(sys.argv)
+from petsc4py import PETSc
 
 from fem.utilitymeshes import RectangleMesh
 from fem.linearelement import LinearElement
@@ -16,7 +22,7 @@ def f(x):
     return np.cos(2 * np.pi * x[0]) * np.cos(4 * np.pi * x[1])
 
 
-nref = 5
+nref = 6
 
 element = LinearElement()
 mesh = RectangleMesh(Lx=1, Ly=1, nref=nref)
@@ -30,9 +36,14 @@ r.data[:] *= 20 * np.pi**2 + 1
 
 u_numerical = Function(fs, "u_numerical")
 
-stiffness_matrix = assemble_lhs(fs, quad)
+stiffness_matrix = assemble_lhs(fs, quad, sparse=True)
+u_petsc = PETSc.Vec().createWithArray(u_numerical.data)
+r_petsc = PETSc.Vec().createWithArray(r.data)
 
-u_numerical.data[:] = np.linalg.solve(stiffness_matrix, r.data[:])
+ksp = PETSc.KSP().create()
+ksp.setOperators(stiffness_matrix)
+ksp.setFromOptions()
+ksp.solve(r_petsc, u_petsc)
 
 u_exact = Function(fs, "u_exact")
 
