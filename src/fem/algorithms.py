@@ -91,7 +91,6 @@ def assemble_lhs(fs, quad, sparse=False):
     element = fs.finiteelement
     if sparse:
         row_start, col_indices = sparsity_lhs(fs)
-        print(row_start, col_indices)
         stiffness_matrix = PETSc.Mat()
         stiffness_matrix.createAIJ((fs.ndof, fs.ndof), csr=(row_start, col_indices))
     else:
