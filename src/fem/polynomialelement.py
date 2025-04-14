@@ -41,39 +41,33 @@ class PolynomialElement(FiniteElement):
         super().__init__()
         self.degree = degree
         # List with powers
-        self._powers = []
+        self._powers = [
+            [j, k - j] for k in range(self.degree + 1) for j in range(k + 1)
+        ]
         # List with nodal points
         nodal_points = []
         # Spacing of nodal points
         h = 1 / self.degree
-
         # nodes associated with vertices
         # vertex 0
-        self._powers.append([0, 0])
         nodal_points.append([0, 0])
         # vertex 1
-        self._powers.append([self.degree, 0])
         nodal_points.append([1, 0])
         # vertex 2
-        self._powers.append([0, self.degree])
         nodal_points.append([0, 1])
         # nodes associated with facets
         # facet 0
         for j in range(1, self.degree):
-            self._powers.append([self.degree - j, j])
             nodal_points.append([(self.degree - j) * h, j * h])
         # facet 1
         for j in range(1, self.degree):
-            self._powers.append([0, self.degree - j])
             nodal_points.append([0, (self.degree - j) * h])
         # facet 2
         for j in range(1, self.degree):
-            self._powers.append([j, 0])
             nodal_points.append([j * h, 0])
         # nodes associated with interior
         for b in range(1, self.degree - 1):
             for a in range(1, self.degree - b):
-                self._powers.append([a, b])
                 nodal_points.append([a * h, b * h])
         self._nodal_points = np.asarray(nodal_points)
         vandermonde_matrix = self._vandermonde_matrix(self._nodal_points)
