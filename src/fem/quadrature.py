@@ -43,17 +43,17 @@ class GaussLegendreQuadrature(Quadrature):
         super().__init__()
         assert npoints >= 1
         self._npoints = npoints
-        xi_x, weights_x = np.polynomial.legendre.leggauss(npoints + 1)
-        xi_y, weights_y = np.polynomial.legendre.leggauss(npoints)
-        xi = []
+        zeta_x, weights_x = np.polynomial.legendre.leggauss(npoints + 1)
+        zeta_y, weights_y = np.polynomial.legendre.leggauss(npoints)
+        zeta = []
         weights = []
-        for x, w_x in zip(xi_x, weights_x):
-            for y, w_y in zip(xi_y, weights_y):
+        for x, w_x in zip(zeta_x, weights_x):
+            for y, w_y in zip(zeta_y, weights_y):
                 x_sq = 1 / 2 * (1 + x)
                 y_sq = 1 / 2 * (1 + y)
-                xi.append([x_sq, (1 - x_sq) * y_sq])
+                zeta.append([x_sq, (1 - x_sq) * y_sq])
                 weights.append(1 / 4 * w_x * w_y * (1 - x_sq))
-        self._nodes = np.asarray(xi)
+        self._nodes = np.asarray(zeta)
         self._weights = np.asarray(weights)
 
     @property
