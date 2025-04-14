@@ -43,8 +43,8 @@ class GaussLegendreQuadrature(Quadrature):
         super().__init__()
         assert npoints >= 1
         self._npoints = npoints
-        xi_x, weights_x = np.polynomial.legendre.leggauss(npoints)
-        xi_y, weights_y = np.polynomial.legendre.leggauss(npoints + 1)
+        xi_x, weights_x = np.polynomial.legendre.leggauss(npoints + 1)
+        xi_y, weights_y = np.polynomial.legendre.leggauss(npoints)
         xi = []
         weights = []
         for x, w_x in zip(xi_x, weights_x):
