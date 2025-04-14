@@ -60,41 +60,42 @@ class LinearElement(FiniteElement):
     def tabulate_dofs(self, fhat):
         """Evaluate the dofs on a given function on the reference element
 
-        :arg fhat: function fhat(xhat) where xhat is a two-dimensional vector or a vector of shape
-                   (2,npoints)
+        :arg fhat: function fhat defined for 2d vectors
         """
         return fhat(self._nodal_points.T)
 
-    def tabulate(self, xi):
+    def tabulate(self, zeta):
         """Evaluate all basis functions at points inside the reference cell
 
         Returns a vector of length 3 with the evaluation of all three basis functions.
-        If xi is a matrix of shape (npoints,2) whose columns represent points, then
+        If zeta is a matrix of shape (npoints,2) whose columns represent points, then
         an array of shape (npoints,3) will be returned
 
-        :arg xi: point xi=(x,y) at which the basis functions are to be evaluated, can also be an
+        :arg zeta: point zeta=(x,y) at which the basis functions are to be evaluated, can also be an
                  array of shape (npoints,2) whose columns are the points.
         """
-        return np.asarray([1 - xi[..., 0] - xi[..., 1], xi[..., 0], xi[..., 1]]).T
+        return np.asarray(
+            [1 - zeta[..., 0] - zeta[..., 1], zeta[..., 0], zeta[..., 1]]
+        ).T
 
-    def tabulate_gradient(self, xi):
+    def tabulate_gradient(self, zeta):
         """Evaluate the gradients of all basis function at point inside the reference cell
 
         Returns an matrux of shape (3,2) with the evaluation of the gradients of all three
-        basis functions. If xi is a matrix of shape (npoints,2) whose columns represent points, then
+        basis functions. If zeta is a matrix of shape (npoints,2) whose columns represent points, then
         an array of shape (npoints,3,2)
 
-        :arg xi: point xi=(x,y) at which the gradients of the basis functions are to be evaluated, can also be an
+        :arg zeta: point zeta=(x,y) at which the gradients of the basis functions are to be evaluated, can also be an
                  array of shape (npoints,2) whose columns are the points.
         """
-        if xi.ndim == 1:
+        if zeta.ndim == 1:
             return np.asarray([[-1, -1], [1, 0], [0, 1]])
         else:
             return np.repeat(
                 np.expand_dims(
                     np.asarray([[-1, -1], [1, 0], [0, 1]]),
-                    axis=list(range(xi.ndim - 1)),
+                    axis=list(range(zeta.ndim - 1)),
                 ),
-                [xi.shape[0]],
+                [zeta.shape[0]],
                 axis=0,
             )

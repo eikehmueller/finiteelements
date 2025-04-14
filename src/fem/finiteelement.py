@@ -32,30 +32,33 @@ class FiniteElement(ABC):
         """Initialise new instance"""
 
     @abstractmethod
-    def tabulate(self, xi):
-        """Tabulate all basis function at a point inside the reference cell
+    def tabulate(self, zeta):
+        """Evaluate all basis functions at a point inside the reference cell
 
-        Returns a vector of length ndof with the evaluation of all basis functions.
+        Returns a vector of length ndof with the evaluation of all basis functions or a matrix
+        of shape (npoints,ndof) if zeta contains several points.
 
-        :arg xi: point xi=(x,y) at which the basis functions are to be evaluated.
+        :arg zeta: point zeta=(x,y) at which the basis functions are to be evaluated; can also be a
+                 matrix of shape (npoints,2).
         """
 
     @abstractmethod
-    def tabulate_gradient(self, xi):
-        """Tabulate the gradient of all basis functions at a point inside the reference cell
+    def tabulate_gradient(self, zeta):
+        """Evaluate the gradients of all basis functions at a point inside the reference cell
 
-        Returns an vector of shape (ndof,2) with the evaluation of the gradients of all
-        basis functions.
+        Returns an matrix of shape (ndof,2) with the evaluation of the gradients of all
+        basis functions. If zeta is a matrix containing several points then the matrix that is
+        returned is of shape (npoints,ndof,2)
 
-        :arg xi: point xi=(x,y) at which the gradients of the basis functions are to be
-                 evaluated.
+        :arg zeta: point zeta=(x,y) at which the gradients of the  basis functions are to be evaluated;
+                 can also be a matrix of shape (npoints,2).
         """
 
     @abstractmethod
     def tabulate_dofs(self, fhat):
         """Tabulate the dofs on a given function on the reference element
 
-        :arg fhat: function fhat(xhat) where xhat is a two-dimensional vector
+        :arg fhat: function fhat defined for 2d vectors
         """
 
     @property

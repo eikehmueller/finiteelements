@@ -75,39 +75,39 @@ class PolynomialElement(FiniteElement):
         # the polynomial coefficients for the k-th basis function
         self._coefficients = np.linalg.inv(vandermonde_matrix)
 
-    def _vandermonde_matrix(self, xi, grad=False):
+    def _vandermonde_matrix(self, zeta, grad=False):
         """Construct the Vandermonde matrix or its gradient
 
-        If grad=False, compute the Vandermonde matrix V(xi)
+        If grad=False, compute the Vandermonde matrix V(zeta)
 
-            V_{i,j}(xi) = x_i^a(j)*y_i^b(j)
+            V_{i,j}(zeta) = x_i^a(j)*y_i^b(j)
 
-        where the row i corresponds to the index of the point xi_i = (x_i,y_i) and
-        the column j to the power (a(j),b(j)) that the point xi_i is raised to.
+        where the row i corresponds to the index of the point zeta_i = (x_i,y_i) and
+        the column j to the power (a(j),b(j)) that the point zeta_i is raised to.
         The resulting matrix has the shape (npoints, ndof) where npoints is the number of points
-        in xi.
+        in zeta.
 
-        If grad=True, compute the gradient grad V(xi) of the Vandermonde matrix with
+        If grad=True, compute the gradient grad V(zeta) of the Vandermonde matrix with
 
-            grad V_{i,j,k} = d V_{i,j}(xi) / dx_k
+            grad V_{i,j,k} = d V_{i,j}(zeta) / dx_k
 
         The resulting tensor has the shape (npoints, ndof,2).
 
-        :arg xi: array of shape (npoints, 2) containing the points for which the Vandermonde matrix
+        :arg zeta: array of shape (npoints, 2) containing the points for which the Vandermonde matrix
                  is to be calculated
         :arg grad: compute gradient?
         """
 
-        npoints = xi.shape[0]
+        npoints = zeta.shape[0]
         if grad:
             mat = np.empty([npoints, len(self._powers), 2])
             for col, (a, b) in enumerate(self._powers):
-                mat[:, col, 0] = a * xi[..., 0] ** max(0, (a - 1)) * xi[..., 1] ** b
-                mat[:, col, 1] = b * xi[..., 0] ** a * xi[..., 1] ** max(0, (b - 1))
+                mat[:, col, 0] = a * zeta[..., 0] ** max(0, (a - 1)) * zeta[..., 1] ** b
+                mat[:, col, 1] = b * zeta[..., 0] ** a * zeta[..., 1] ** max(0, (b - 1))
         else:
             mat = np.empty([npoints, len(self._powers)])
             for col, (a, b) in enumerate(self._powers):
-                mat[:, col] = xi[..., 0] ** a * xi[..., 1] ** b
+                mat[:, col] = zeta[..., 0] ** a * zeta[..., 1] ** b
         return mat
 
     @property
@@ -128,42 +128,42 @@ class PolynomialElement(FiniteElement):
     def tabulate_dofs(self, fhat):
         """Evaluate the dofs on a given function on the reference element
 
-        :arg fhat: function fhat(xhat) where xhat is a two-dimensional vector
+        :arg fhat: function fhat defined for 2d vectors
         """
         return fhat(self._nodal_points.T)
 
-    def tabulate(self, xi):
+    def tabulate(self, zeta):
         """Evaluate all basis functions at a point inside the reference cell
 
         Returns a vector of length ndof with the evaluation of all basis functions or a matrix
         of shape (npoints,ndof) if xi contains several points.
 
-        :arg xi: point xi=(x,y) at which the basis functions are to be evaluated; can also be a
+        :arg zeta: point zeta=(x,y) at which the basis functions are to be evaluated; can also be a
                  matrix of shape (npoints,2).
         """
         mat = np.squeeze(
             self._vandermonde_matrix(
-                np.expand_dims(xi, axis=list(range(2 - xi.ndim))), grad=False
+                np.expand_dims(zeta, axis=list(range(2 - zeta.ndim))), grad=False
             )
             @ self._coefficients
         )
         return mat
 
-    def tabulate_gradient(self, xi):
+    def tabulate_gradient(self, zeta):
         """Evaluate the gradients of all basis functions at a point inside the reference cell
 
         Returns an matrix of shape (ndof,2) with the evaluation of the gradients of all
-        basis functions. If xi is a matrix containing several points then the matrix that is
+        basis functions. If zeta is a matrix containing several points then the matrix that is
         returned is of shape (npoints,ndof,2)
 
-        :arg xi: point xi=(x,y) at which the gradients of the  basis functions are to be evaluated;
+        :arg zeta: point zeta=(x,y) at which the gradients of the  basis functions are to be evaluated;
                  can also be a matrix of shape (npoints,2).
         """
         mat = np.squeeze(
             np.einsum(
-                "ilk,lj->ijk",
+                "imk,mj->ijk",
                 self._vandermonde_matrix(
-                    np.expand_dims(xi, axis=list(range(2 - xi.ndim))), grad=True
+                    np.expand_dims(zeta, axis=list(range(2 - zeta.ndim))), grad=True
                 ),
                 self._coefficients,
             )
