@@ -76,28 +76,19 @@ class FunctionSpace:
         :arg cell: index of cell
         :arg j: local dof-index
         """
-        if j < 3 * self.finiteelement.ndof_per_vertex:
+        entity_type, i, k = self.finiteelement.inverse_dofmap(j)
+        if entity_type == "vertex":
             # dof is associated with vertex v
-            v = self.mesh.cell2vertex[cell][j // self.finiteelement.ndof_per_vertex]
-            return v * self.finiteelement.ndof_per_vertex + (
-                j % self.finiteelement.ndof_per_vertex
-            )
+            v = self.mesh.cell2vertex[cell][i]
+            return v * self.finiteelement.ndof_per_vertex + k
 
-        elif j < 3 * (
-            self.finiteelement.ndof_per_vertex + self.finiteelement.ndof_per_facet
-        ):
+        elif entity_type == "facet":
             # dof is associated with facet
-            f = self.mesh.cell2facet[cell][
-                (j - 3 * self.finiteelement.ndof_per_vertex)
-                // self.finiteelement.ndof_per_facet
-            ]
+            f = self.mesh.cell2facet[cell][i]
             return (
                 self.mesh.nvertices * self.finiteelement.ndof_per_vertex
                 + f * self.finiteelement.ndof_per_facet
-                + (
-                    (j - 3 * self.finiteelement.ndof_per_vertex)
-                    % self.finiteelement.ndof_per_facet
-                )
+                + k
             )
         else:
             # dof is associated with cell
@@ -105,10 +96,5 @@ class FunctionSpace:
                 self.mesh.nvertices * self.finiteelement.ndof_per_vertex
                 + self.mesh.nfacets * self.finiteelement.ndof_per_facet
                 + cell * self.finiteelement.ndof_per_interior
-                + j
-                - 3
-                * (
-                    self.finiteelement.ndof_per_vertex
-                    + self.finiteelement.ndof_per_facet
-                )
+                + k
             )

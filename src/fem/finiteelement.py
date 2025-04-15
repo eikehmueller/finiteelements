@@ -1,6 +1,7 @@
 """Base class for finite element basis functions"""
 
 from abc import ABC, abstractmethod
+from functools import lru_cache
 
 __all__ = ["FiniteElement"]
 
@@ -80,3 +81,44 @@ class FiniteElement(ABC):
     def ndof(self):
         """Return total number of unknowns"""
         return 3 * (self.ndof_per_vertex + self.ndof_per_facet) + self.ndof_per_interior
+
+    @lru_cache
+    def dofmap(self, entity_type, i, k):
+        """Compute dof-index of j-th degree of freedom associated with i-th entity
+
+        Returns index in the range 0, 1, ..., ndof-1
+
+        :arg entity_type: type of topological entity. Must be "vertex", "facet" or "interior"
+        :arg i: index of entity, ignored if entity_type is "interior"
+        :arg k: index of dof on entity
+        """
+        if entity_type == "vertex":
+            return self.ndof_per_vertex * i + k
+        elif entity_type == "vertex":
+            return 3 * self.ndof_per_vertex + self.ndof_per_facet * i + k
+        elif entity_type == "interior":
+            return 3 * (self.ndof_per_vertex + self.ndof_per_facet) + k
+        else:
+            raise RuntimeError(f"Unknown entity type: {entity_type}")
+
+    @lru_cache
+    def inverse_dofmap(self, j):
+        """Work out entity and local index on entity for a given degree of freedom
+
+        Returns a tuple (entity_type,i,k) where entity_type is the type of topological
+        entity associated with the dof, i is the index of this entity and k is the index of
+        the dof on that entity.
+
+        :arg j: index of degree of freedom
+        """
+        if j < 3 * self.ndof_per_vertex:
+            # dof is associated with vertex v
+            return ("vertex", j // self.ndof_per_vertex, j % self.ndof_per_vertex)
+        elif j < 3 * (self.ndof_per_vertex + self.ndof_per_facet):
+            # dof is associated with facet
+            ell = j - 3 * self.ndof_per_vertex
+            return ("facet", ell // self.ndof_per_facet, ell % self.ndof_per_facet)
+        elif j < self.ndof:
+            return ("interior", 0, j - 3 * (self.ndof_per_vertex + self.ndof_per_facet))
+        else:
+            raise RuntimeError(f"dof-index {j} is larger than ndof-1 = {self.ndof-1}")
