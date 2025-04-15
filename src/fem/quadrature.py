@@ -33,11 +33,11 @@ class Quadrature(ABC):
 class GaussLegendreQuadratureLineSegment(Quadrature):
     """Gauss-Legendre quadrature on a line segment"""
 
-    def __init__(self, a, b, npoints):
+    def __init__(self, v_a, v_b, npoints):
         """Initialise a new instance
 
-        :arg a: starting point of line segment
-        :arg b: end point of line segment
+        :arg v_a: starting point of line segment
+        :arg v_b: end point of line segment
         :arg npoints: number of quadrature points
         """
         super().__init__()
@@ -45,10 +45,10 @@ class GaussLegendreQuadratureLineSegment(Quadrature):
         self._npoints = npoints
         zeta, weights = np.polynomial.legendre.leggauss(npoints + 1)
         self._nodes = np.outer(
-            1 / 2 * (1 - np.asarray(zeta)), np.asarray(a)
-        ) + np.outer(1 / 2 * (1 + np.asarray(zeta)), np.asarray(b))
+            1 / 2 * (1 - np.asarray(zeta)), np.asarray(v_a)
+        ) + np.outer(1 / 2 * (1 + np.asarray(zeta)), np.asarray(v_b))
         self._weights = (
-            np.linalg.norm(np.asarray(b) - np.asarray(a)) / 2 * np.asarray(weights)
+            np.linalg.norm(np.asarray(v_b) - np.asarray(v_a)) / 2 * np.asarray(weights)
         )
 
     @property
