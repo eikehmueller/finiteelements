@@ -5,7 +5,7 @@ import pytest
 from fem.polynomialelement import PolynomialElement
 from fem.utilitymeshes import RectangleMesh, TriangleMesh
 from fem.functionspace import FunctionSpace
-from fem.quadrature import GaussLegendreQuadrature
+from fem.quadrature import GaussLegendreQuadratureReferenceTriangle
 from fem.algorithms import assemble_lhs
 from fem.auxilliary import csr_as_dense
 
@@ -19,7 +19,7 @@ def test_sparse_assembly(degree):
     mesh = TriangleMesh(nref=nref)
     fs = FunctionSpace(mesh, element)
 
-    quad = GaussLegendreQuadrature(2 * degree)
+    quad = GaussLegendreQuadratureReferenceTriangle(2 * degree)
 
     sparse_stiffness_matrix = assemble_lhs(fs, quad, sparse=True)
     dense_stiffness_matrix = assemble_lhs(fs, quad, sparse=False)

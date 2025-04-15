@@ -14,7 +14,7 @@ from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
 from fem.utilities import save_to_vtk
 from fem.algorithms import interpolate, assemble_rhs, assemble_lhs, two_norm
-from fem.quadrature import GaussLegendreQuadrature
+from fem.quadrature import GaussLegendreQuadratureReferenceTriangle
 
 
 def f(x):
@@ -28,7 +28,7 @@ element = LinearElement()
 mesh = RectangleMesh(Lx=1, Ly=1, nref=nref)
 fs = FunctionSpace(mesh, element)
 
-quad = GaussLegendreQuadrature(3)
+quad = GaussLegendreQuadratureReferenceTriangle(3)
 
 r = CoFunction(fs)
 assemble_rhs(f, r, quad)

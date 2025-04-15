@@ -1,7 +1,7 @@
 """Base class for finite element basis functions"""
 
 from abc import ABC, abstractmethod
-from functools import lru_cache
+from functools import cache
 
 __all__ = ["FiniteElement"]
 
@@ -82,7 +82,7 @@ class FiniteElement(ABC):
         """Return total number of unknowns"""
         return 3 * (self.ndof_per_vertex + self.ndof_per_facet) + self.ndof_per_interior
 
-    @lru_cache
+    @cache
     def dofmap(self, entity_type, i, k):
         """Compute dof-index of j-th degree of freedom associated with i-th entity
 
@@ -101,7 +101,7 @@ class FiniteElement(ABC):
         else:
             raise RuntimeError(f"Unknown entity type: {entity_type}")
 
-    @lru_cache
+    @cache
     def inverse_dofmap(self, j):
         """Work out entity and local index on entity for a given degree of freedom
 

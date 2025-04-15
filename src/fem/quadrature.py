@@ -3,11 +3,11 @@
 from abc import ABC, abstractmethod
 import numpy as np
 
-__all__ = ["Quadrature", "GaussLegendreQuadrature"]
+__all__ = ["Quadrature", "GaussLegendreQuadratureReferenceTriangle"]
 
 
 class Quadrature(ABC):
-    """Base class for quadrature in 2d"""
+    """Base class for quadrature rule"""
 
     @property
     @abstractmethod
@@ -26,7 +26,7 @@ class Quadrature(ABC):
         can be integrated exactly"""
 
 
-class GaussLegendreQuadrature(Quadrature):
+class GaussLegendreQuadratureReferenceTriangle(Quadrature):
     """Gauss-Legendre quadrature on reference triangle
 
     The tensor-product of one-dimensional Gauss-Legendre quadrature of given degree is

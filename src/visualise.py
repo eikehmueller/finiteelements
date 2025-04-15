@@ -8,14 +8,14 @@ from fem.utilities import (
     visualise_element,
     visualise_quadrature,
 )
-from fem.quadrature import GaussLegendreQuadrature
+from fem.quadrature import GaussLegendreQuadratureReferenceTriangle
 
 mesh = RectangleMesh(Lx=1, Ly=1, nref=1)
 
 visualise_mesh(mesh, "mesh.pdf")
 
 element = PolynomialElement(2)
-visualise_element(element, "element.pdf")
+visualise_element(element, "element.png")
 
-quad = GaussLegendreQuadrature(3)
+quad = GaussLegendreQuadratureReferenceTriangle(3)
 visualise_quadrature(quad, "quadrature.pdf")
