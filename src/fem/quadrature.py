@@ -3,7 +3,11 @@
 from abc import ABC, abstractmethod
 import numpy as np
 
-__all__ = ["Quadrature", "GaussLegendreQuadratureReferenceTriangle"]
+__all__ = [
+    "Quadrature",
+    "GaussLegendreQuadratureLineSegment",
+    "GaussLegendreQuadratureReferenceTriangle",
+]
 
 
 class Quadrature(ABC):
@@ -24,6 +28,44 @@ class Quadrature(ABC):
     def degree_of_precision(self):
         """Degree of precision, i.e. highest polynomial degree that
         can be integrated exactly"""
+
+
+class GaussLegendreQuadratureLineSegment(Quadrature):
+    """Gauss-Legendre quadrature on a line segment"""
+
+    def __init__(self, a, b, npoints):
+        """Initialise a new instance
+
+        :arg a: starting point of line segment
+        :arg b: end point of line segment
+        :arg npoints: number of quadrature points
+        """
+        super().__init__()
+        assert npoints >= 1
+        self._npoints = npoints
+        zeta, weights = np.polynomial.legendre.leggauss(npoints + 1)
+        self._nodes = np.outer(
+            1 / 2 * (1 - np.asarray(zeta)), np.asarray(a)
+        ) + np.outer(1 / 2 * (1 + np.asarray(zeta)), np.asarray(b))
+        self._weights = (
+            np.linalg.norm(np.asarray(b) - np.asarray(a)) / 2 * np.asarray(weights)
+        )
+
+    @property
+    def nodes(self):
+        """Return quadrature nodes"""
+        return self._nodes
+
+    @property
+    def weights(self):
+        """Return quadrature weights"""
+        return self._weights
+
+    @property
+    def degree_of_precision(self):
+        """Degree of precision, i.e. highest polynomial degree that
+        can be integrated exactly"""
+        return 2 * self._npoints - 1
 
 
 class GaussLegendreQuadratureReferenceTriangle(Quadrature):
