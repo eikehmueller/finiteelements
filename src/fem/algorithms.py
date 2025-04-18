@@ -156,6 +156,6 @@ def two_norm(w, quad):
             phi,
             np.abs(np.linalg.det(J)),
         )
-        w = w.data[j_g]
-        nrm += w @ local_matrix @ w
+        w_local = w.data[j_g]
+        nrm += w_local @ local_matrix @ w_local
     return np.sqrt(nrm)
