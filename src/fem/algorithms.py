@@ -1,9 +1,5 @@
 import numpy as np
 from petsc4py import PETSc
-from fem.quadrature import (
-    GaussLegendreQuadratureLineSegment,
-    GaussLegendreQuadratureReferenceTriangle,
-)
 from fem.auxilliary import jacobian
 
 __all__ = [
