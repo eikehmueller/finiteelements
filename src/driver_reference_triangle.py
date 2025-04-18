@@ -1,10 +1,7 @@
 """Main program"""
 
+import functools
 import numpy as np
-
-from matplotlib import pyplot as plt
-from matplotlib.patches import Polygon
-from matplotlib.collections import PatchCollection
 
 
 from fem.polynomialelement import PolynomialElement
@@ -15,19 +12,32 @@ from fem.algorithms_reference_triangle import (
 )
 
 
-def f(x):
-    """function to interpolate"""
-    return (1 + 2 * np.pi**2) * np.sin(np.pi * x[..., 0]) * np.sin(np.pi * x[..., 1])
+def f(x, kappa, omega):
+    """function to interpolate
+
+    :arg x: point at which the function is evaluated
+    :arg kappa: coefficient of diffusion term
+    :arg omega: coefficient of zero-order term
+    """
+    return (
+        (omega + 2 * np.pi**2 * kappa)
+        * np.sin(np.pi * x[..., 0])
+        * np.sin(np.pi * x[..., 1])
+    )
 
 
-def g(x):
-    """boundary function"""
+def g(x, kappa):
+    """boundary function
+
+    :arg x: point at which the function is evaluated
+    :arg kappa: coefficient of diffusion term
+    """
     if np.all(x[..., 1]) < 1e-12:
-        return -np.pi * np.sin(np.pi * x[..., 0])
+        return -np.pi * kappa * np.sin(np.pi * x[..., 0])
     if np.all(x[..., 0]) < 1e-12:
-        return -np.pi * np.sin(np.pi * x[..., 1])
+        return -np.pi * kappa * np.sin(np.pi * x[..., 1])
     else:
-        return (
+        return kappa * (
             np.pi
             / np.sqrt(2)
             * (
@@ -43,6 +53,10 @@ def plot_solution(u_numerical, filename):
     :arg u_numerical: numerical solution
     :arg filename: name of file to save plot to
     """
+    from matplotlib import pyplot as plt
+    from matplotlib.patches import Polygon
+    from matplotlib.collections import PatchCollection
+
     h = 0.01
     X = np.arange(0, 1 + h / 2, h)
     Y = np.arange(0, 1 + h / 2, h)
@@ -86,12 +100,24 @@ def plot_solution(u_numerical, filename):
     plt.savefig(filename, bbox_inches="tight")
 
 
+# Coefficient of diffusion term
+kappa = 0.9
+# Coefficient of zero order term
+omega = 0.4
+# Polynomial degree
 degree = 4
+# Quadrature parameter
 n_q = degree + 1
+
 element = PolynomialElement(degree)
 
-stiffness_matrix = assemble_lhs(element, n_q)
-r = assemble_rhs(f, g, element, n_q)
+stiffness_matrix = assemble_lhs(element, n_q, kappa, omega)
+r = assemble_rhs(
+    functools.partial(f, kappa=kappa, omega=omega),
+    functools.partial(g, kappa=kappa),
+    element,
+    n_q,
+)
 
 u_numerical = np.linalg.solve(stiffness_matrix, r)
 u_exact = element.tabulate_dofs(lambda x: np.sin(np.pi * x[0]) * np.sin(np.pi * x[1]))
@@ -99,7 +125,8 @@ error = u_numerical - u_exact
 
 error_nrm = two_norm(error, element, n_q)
 print(f"degree = {degree}")
-print("condition number = ", np.linalg.cond(stiffness_matrix))
-print("error:      ", error_nrm)
+condition_number = np.linalg.cond(stiffness_matrix)
+print(f"condition number = {condition_number:8.2e}")
+print(f"error norm:      {error_nrm:8.3e}")
 
 plot_solution(u_numerical, "triangle_solution.pdf")

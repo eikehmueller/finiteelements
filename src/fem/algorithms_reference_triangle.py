@@ -12,18 +12,22 @@ __all__ = [
 ]
 
 
-def assemble_lhs(element, n_q):
+def assemble_lhs(element, n_q, kappa, omega):
     """Assemble LHS bilinear form into matrix
 
     :arg element: finite element
     :arg n_q: number of quadrature points
+    :arg kappa: coefficient kappa of diffusion term
+    :arg omega: coefficient kappa of zero-order term
     """
     quad = GaussLegendreQuadratureReferenceTriangle(n_q)
     zeta_q = np.asarray(quad.nodes)
     w_q = quad.weights
     grad_phi = element.tabulate_gradient(zeta_q)
     phi = element.tabulate(zeta_q)
-    stiffness_matrix = np.einsum("q,qik,qjk->ij", w_q, grad_phi, grad_phi) + np.einsum(
+    stiffness_matrix = kappa * np.einsum(
+        "q,qik,qjk->ij", w_q, grad_phi, grad_phi
+    ) + omega * np.einsum(
         "q,qi,qj->ij",
         w_q,
         phi,
