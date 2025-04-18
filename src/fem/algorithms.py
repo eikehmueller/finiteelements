@@ -1,9 +1,18 @@
 import numpy as np
 from petsc4py import PETSc
-
+from fem.quadrature import (
+    GaussLegendreQuadratureLineSegment,
+    GaussLegendreQuadratureReferenceTriangle,
+)
 from fem.auxilliary import jacobian
 
-__all__ = ["interpolate", "assemble_rhs", "sparsity_lhs", "assemble_lhs", "two_norm"]
+__all__ = [
+    "interpolate",
+    "assemble_rhs",
+    "sparsity_lhs",
+    "assemble_lhs",
+    "two_norm",
+]
 
 
 def interpolate(f, u):
@@ -127,16 +136,15 @@ def assemble_lhs(fs, quad, sparse=False):
     return stiffness_matrix
 
 
-def two_norm(u, quad):
+def two_norm(w, quad):
     """Compute L2 norm of a function
 
-    :arg u: finite element function
+    :arg w: finite element function
     :arg quad: quadrature rule
     """
-    fs = u.functionspace
+    fs = w.functionspace
     mesh = fs.mesh
     element = fs.finiteelement
-    stiffness_matrix = np.zeros((fs.ndof, fs.ndof))
     nrm = 0
     for cell in range(mesh.ncells):
         # global indices of function space
@@ -152,6 +160,6 @@ def two_norm(u, quad):
             phi,
             np.abs(np.linalg.det(J)),
         )
-        w = u.data[j_g]
+        w = w.data[j_g]
         nrm += w @ local_matrix @ w
     return np.sqrt(nrm)
