@@ -85,11 +85,13 @@ def sparsity_lhs(fs):
     return row_start, col_indices
 
 
-def assemble_lhs(fs, quad, sparse=False):
+def assemble_lhs(fs, quad, kappa, omega, sparse=False):
     """Assemble LHS bilinear form into matrix
 
     :arg fs: function space
     :arg quad: quadrature rule
+    :arg kappa: coefficient of diffusion term
+    :arg omega: coefficient of zero order term
     :arg sparse: assemble sparse matrix in PETSc format
     """
     mesh = fs.mesh
@@ -109,14 +111,14 @@ def assemble_lhs(fs, quad, sparse=False):
         phi = element.tabulate(x_q_hat)
         J = jacobian(mesh, cell, x_q_hat)
         JT_J_inv = np.linalg.inv(np.einsum("qji,qjk->qik", J, J))
-        local_matrix = np.einsum(
+        local_matrix = kappa * np.einsum(
             "q,qjl,qlm,qkm,q->jk",
             w_q,
             grad_phi,
             JT_J_inv,
             grad_phi,
             np.abs(np.linalg.det(J)),
-        ) + np.einsum(
+        ) + omega * np.einsum(
             "q,qj,qk,q->jk",
             w_q,
             phi,

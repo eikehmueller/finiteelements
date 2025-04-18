@@ -23,6 +23,10 @@ def f(x):
 
 
 nref = 6
+# Coeffcient of diffusion term
+kappa = 0.9
+# Coefficient of zero order term
+omega = 0.4
 
 element = LinearElement()
 mesh = RectangleMesh(Lx=1, Ly=1, nref=nref)
@@ -32,11 +36,11 @@ quad = GaussLegendreQuadratureReferenceTriangle(3)
 
 r = CoFunction(fs)
 assemble_rhs(f, r, quad)
-r.data[:] *= 20 * np.pi**2 + 1
+r.data[:] *= (2**2 + 4**2) * np.pi**2 * kappa + omega
 
 u_numerical = Function(fs, "u_numerical")
 
-stiffness_matrix = assemble_lhs(fs, quad, sparse=True)
+stiffness_matrix = assemble_lhs(fs, quad, kappa, omega, sparse=True)
 u_petsc = PETSc.Vec().createWithArray(u_numerical.data)
 r_petsc = PETSc.Vec().createWithArray(r.data)
 
