@@ -5,7 +5,7 @@ import numpy as np
 
 import petsc4py
 
-petsc4py.init(sys.argv)
+petsc4py.init("-ksp_type preonly -pc_type lu")
 from petsc4py import PETSc
 
 from fem.utilitymeshes import RectangleMesh

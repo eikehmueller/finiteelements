@@ -85,10 +85,17 @@ class FunctionSpace:
         elif entity_type == "facet":
             # dof is associated with facet
             f = self.mesh.cell2facet[cell][i]
+            # check whether facet is oriented in the same direction as the local facet
+            aligned_orientation = (
+                self.mesh.facet2vertex[f][0] == self.mesh.cell2vertex[cell][(i + 1) % 3]
+            )
+            k_local = (
+                k if aligned_orientation else self.finiteelement.ndof_per_facet - k - 1
+            )
             return (
                 self.mesh.nvertices * self.finiteelement.ndof_per_vertex
                 + f * self.finiteelement.ndof_per_facet
-                + k
+                + k_local
             )
         else:
             # dof is associated with cell

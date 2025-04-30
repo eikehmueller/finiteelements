@@ -10,8 +10,11 @@ def test_local2global_triangle(degree):
     mesh = TriangleMesh(nref=0)
     element = PolynomialElement(degree)
     functionspace = FunctionSpace(mesh, element)
-    idx = range(element.ndof)
-    assert functionspace.local2global(0, idx) == list(idx)
+    idx = list(range(element.ndof))
+    idx[3 + (degree - 1) : 3 + 2 * (degree - 1)] = idx[
+        2 + 2 * (degree - 1) : 2 + (degree - 1) : -1
+    ]
+    assert functionspace.local2global(0, range(element.ndof)) == list(idx)
 
 
 def test_local2global_rectangle():
@@ -20,6 +23,8 @@ def test_local2global_rectangle():
     element = PolynomialElement(3)
     functionspace = FunctionSpace(mesh, element)
     idx = range(10)
-    assert (functionspace.local2global(0, idx) == [0, 1, 2, 4, 5, 6, 7, 8, 9, 14]) and (
-        functionspace.local2global(1, idx) == [0, 3, 2, 10, 11, 6, 7, 12, 13, 15]
+    print(functionspace.local2global(0, idx))
+    print(functionspace.local2global(1, idx))
+    assert (functionspace.local2global(0, idx) == [0, 1, 2, 4, 5, 7, 6, 8, 9, 14]) and (
+        functionspace.local2global(1, idx) == [3, 2, 1, 5, 4, 10, 11, 13, 12, 15]
     )
