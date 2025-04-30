@@ -68,8 +68,8 @@ def visualise_mesh(mesh, filename):
     # vertices
     for cell in range(mesh.ncells):
         p = np.zeros((4, 3))
-        for j, facet in enumerate(mesh.cell2facet[cell]):
-            p[j, :2] = np.asarray(mesh.vertices[mesh.facet2vertex[facet][0]])
+        for j in range(3):
+            p[j, :2] = np.asarray(mesh.vertices[mesh.cell2vertex[cell][j]])
         p[-1, :] = p[0, :]
         axs[0, 0].plot(
             p[:, 0],
@@ -120,20 +120,13 @@ def visualise_mesh(mesh, filename):
     # cells
     for cell in range(mesh.ncells):
         p = np.zeros((4, 3))
-        for j, facet in enumerate(mesh.cell2facet[cell]):
-            p[j, :2] = np.asarray(mesh.vertices[mesh.facet2vertex[facet][0]])
+        for j in range(3):
+            p[j, :2] = np.asarray(mesh.vertices[mesh.cell2vertex[cell][j]])
         p[-1, :] = p[0, :]
-        orientation = np.cross(p[1, :] - p[0, :], p[2, :] - p[1, :])[2]
-        orientation /= np.abs(orientation)
         m = np.mean(p[:-1, :], axis=0)
         rho = 0.8
         p = rho * p + (1 - rho) * np.expand_dims(m, axis=0)
-        axs[1, 0].plot(
-            p[:, 0],
-            p[:, 1],
-            linewidth=2,
-            color="blue" if orientation > 0 else "red",
-        )
+        axs[1, 0].plot(p[:, 0], p[:, 1], linewidth=2, color="blue")
         axs[1, 0].annotate(
             f"{cell:3d}",
             (m[0], m[1]),

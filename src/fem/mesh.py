@@ -87,7 +87,13 @@ class Mesh:
     def cell2vertex(self):
         """Return mapping from cells to associated vertices"""
         return [
-            [self.facet2vertex[self.cell2facet[cell][(j - 1) % 3]][0] for j in range(3)]
+            [
+                (
+                    set(self.facet2vertex[self.cell2facet[cell][(j + 1) % 3]])
+                    & set(self.facet2vertex[self.cell2facet[cell][(j + 2) % 3]])
+                ).pop()
+                for j in range(3)
+            ]
             for cell in range(self.ncells)
         ]
 
@@ -132,7 +138,7 @@ class Mesh:
             v1, v2 = self.facet2vertex[coarse_facet]
             self.vertices[new_vertex, :] = 0.5 * (self.vertices[v1] + self.vertices[v2])
             fine_facet2vertex.append([v1, new_vertex])
-            fine_facet2vertex.append([new_vertex, v2])
+            fine_facet2vertex.append([v2, new_vertex])
             coarse2finefacet.append([facet_idx, facet_idx + 1])
             vertex_idx += 1
             facet_idx += 2
@@ -146,18 +152,37 @@ class Mesh:
                 for coarse_facet in coarse_facets
             ]
             # add interior facets
-            for j in range(2, -1, -1):
+            for j in range(3):
                 fine_facet2vertex.append(
-                    [facet_centre_vertex[(j + 1) % 3], facet_centre_vertex[j]]
+                    sorted(
+                        [
+                            facet_centre_vertex[(j + 1) % 3],
+                            facet_centre_vertex[(j + 2) % 3],
+                        ]
+                    )
                 )
             # add interior cells
+
+            coarse2finefacet[coarse_facets[j]][0]
+
+            # fine facets on boundary of coarse cell
+            boundary_fine_facets = []
+            for j in range(3):
+                fine_facets = coarse2finefacet[coarse_facets[j]]
+                if (
+                    fine_facet2vertex[fine_facets[0]][0]
+                    == self.cell2vertex[coarse_cell][(j + 1) % 3]
+                ):
+                    boundary_fine_facets.append(fine_facets)
+                else:
+                    boundary_fine_facets.append(fine_facets[::-1])
             # three cells that touch coarse facets
             for j in range(3):
                 fine_cell2facet.append(
                     [
-                        coarse2finefacet[coarse_facets[(2 + j) % 3]][1],
-                        coarse2finefacet[coarse_facets[j]][0],
-                        facet_idx + (3 - j) % 3,
+                        boundary_fine_facets[(j + 2) % 3][1],
+                        boundary_fine_facets[j][0],
+                        facet_idx + (j + 1) % 3,
                     ]
                 )
             # cell that does not touch any coarse facet
@@ -171,3 +196,5 @@ class Mesh:
             facet_idx += 3
         self.cell2facet = fine_cell2facet
         self.facet2vertex = fine_facet2vertex
+        # delete property to reset cache
+        del self.cell2vertex
