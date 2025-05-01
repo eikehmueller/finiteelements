@@ -65,6 +65,6 @@ def test_gradient_tabulation_vectorised(element):
 def test_linearelement_dof_tabulation(element):
     """Check that dof-evaluation works as expected"""
     # function to test
-    fhat = lambda x: np.exp(0.5 + x[0] + 2 * x[1])
+    fhat = lambda x: np.exp(0.5 + x[..., 0] + 2 * x[..., 1])
     nodal_points = np.asarray([[0, 0], [1, 0], [0, 1]])
-    assert np.allclose(fhat(nodal_points.T), element.tabulate_dofs(fhat))
+    assert np.allclose(fhat(nodal_points), element.tabulate_dofs(fhat))

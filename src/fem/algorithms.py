@@ -28,7 +28,7 @@ def interpolate(f, u):
 
         # local function
         f_hat = lambda x_hat, x_dof_vector=x_dof_vector: f(
-            np.einsum("j,ijk->ik", x_dof_vector, element_coord.tabulate(x_hat.T)).T
+            np.einsum("j,kji->ik", x_dof_vector, element_coord.tabulate(x_hat))
         )
 
         u_dof_vector = element.tabulate_dofs(f_hat)

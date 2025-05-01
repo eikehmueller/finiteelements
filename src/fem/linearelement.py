@@ -62,7 +62,7 @@ class LinearElement(FiniteElement):
 
         :arg fhat: function fhat defined for 2d vectors
         """
-        return fhat(self._nodal_points.T)
+        return fhat(self._nodal_points)
 
     def tabulate(self, zeta):
         """Evaluate all basis functions at points inside the reference cell

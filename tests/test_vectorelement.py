@@ -45,5 +45,7 @@ def test_dof_tabulation(degree):
     element = PolynomialElement(degree)
     vectorelement = VectorElement(element)
     xi = nodal_points(degree)
-    fhat = lambda x: np.asarray([np.exp(x[0]) * (1 + x[1]), x[0] + np.exp(2 * x[1])])
-    assert np.allclose(vectorelement.tabulate_dofs(fhat), fhat(xi.T).T.flatten())
+    fhat = lambda x: np.asarray(
+        [np.exp(x[..., 0]) * (1 + x[..., 1]), x[..., 0] + np.exp(2 * x[..., 1])]
+    )
+    assert np.allclose(vectorelement.tabulate_dofs(fhat), fhat(xi).T.flatten())

@@ -12,6 +12,17 @@ from fem.algorithms_reference_triangle import (
 )
 
 
+def u_exact(x, sigma, x0):
+    """Analytical solution
+
+    :arg x: point at which the function is evaluated
+    :arg sigma: width of peak
+    :arg x0: location of peak"""
+    return np.exp(
+        -1 / (2 * sigma**2) * ((x[..., 0] - x0[0]) ** 2 + (x[..., 1] - x0[1]) ** 2)
+    )
+
+
 def f(x, kappa, omega, sigma, x0):
     """function to interpolate
 
@@ -22,8 +33,9 @@ def f(x, kappa, omega, sigma, x0):
     :arg x0: location of peak
     """
     x_sq = (x[..., 0] - x0[0]) ** 2 + (x[..., 1] - x0[1]) ** 2
-    u_exact = np.exp(-1 / (2 * sigma**2) * x_sq)
-    return (2 * kappa / sigma**2 + omega - kappa / sigma**4 * x_sq) * u_exact
+    return (2 * kappa / sigma**2 + omega - kappa / sigma**4 * x_sq) * u_exact(
+        x, sigma, x0
+    )
 
 
 def g(x, kappa, sigma, x0):
@@ -34,10 +46,6 @@ def g(x, kappa, sigma, x0):
     :arg sigma: width of peak
     :arg x0: location of peak
     """
-    u_exact = np.exp(
-        -1 / (2 * sigma**2) * ((x[..., 0] - x0[0]) ** 2 + (x[..., 1] - x0[1]) ** 2)
-    )
-
     if np.all(x[..., 1]) < 1e-12:
         # facet F_1
         n_dot_x = -(x[..., 1] - x0[1])
@@ -47,7 +55,7 @@ def g(x, kappa, sigma, x0):
     else:
         # facet F_0
         n_dot_x = (x[..., 0] - x0[0] + x[..., 1] - x0[1]) / np.sqrt(2)
-    return -kappa / sigma**2 * n_dot_x * u_exact
+    return -kappa / sigma**2 * n_dot_x * u_exact(x, sigma, x0)
 
 
 def plot_solution(u_numerical, sigma, x0, filename):
@@ -65,11 +73,10 @@ def plot_solution(u_numerical, sigma, x0, filename):
     Y = np.arange(0, 1 + h / 2, h)
     X, Y = np.meshgrid(X, Y)
 
-    Z_exact = np.exp(-1 / (2 * sigma**2) * ((X - x0[0]) ** 2 + (Y - x0[1]) ** 2))
-
     XY = np.asarray([X, Y]).T.reshape([X.shape[0] * X.shape[1], 2])
 
     T = element.tabulate(XY)
+    Z_exact = u_exact(XY, sigma, x0).reshape([X.shape[0], X.shape[1]]).T
     Z_numerical = np.dot(T, u_numerical).reshape([X.shape[0], X.shape[1]]).T
 
     fig, axs = plt.subplots(1, 3)
@@ -127,12 +134,10 @@ r = assemble_rhs(
 )
 
 u_numerical = np.linalg.solve(stiffness_matrix, r)
-u_exact = element.tabulate_dofs(
-    lambda x: np.exp(-1 / (2 * sigma**2) * ((x[0] - x0[0]) ** 2 + (x[1] - x0[1]) ** 2))
-)
-error = u_numerical - u_exact
+u = element.tabulate_dofs(functools.partial(u_exact, sigma=sigma, x0=x0))
+error = u_numerical - u
 
-rel_error_nrm = two_norm(error, element, n_q) / two_norm(u_exact, element, n_q)
+rel_error_nrm = two_norm(error, element, n_q) / two_norm(u, element, n_q)
 condition_number = np.linalg.cond(stiffness_matrix)
 print(f"{degree}: {rel_error_nrm**2:10.4e},")
 
