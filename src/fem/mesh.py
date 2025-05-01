@@ -65,7 +65,6 @@ class Mesh:
         self.vertices = None
         self.cell2facet = None
         self.facet2vertex = None
-        self.vertices = None
         self.coordinates = None
 
     @property
