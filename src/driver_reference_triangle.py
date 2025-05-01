@@ -112,7 +112,7 @@ kappa = 0.9
 # Coefficient of zero order term
 omega = 0.4
 # Polynomial degree
-degree = 22
+degree = 4
 # Quadrature parameter
 n_q = degree + 1
 
@@ -126,19 +126,14 @@ r = assemble_rhs(
     n_q,
 )
 
-stiffness_matrix = stiffness_matrix.astype(np.float32)
-r = r.astype(np.float32)
-
 u_numerical = np.linalg.solve(stiffness_matrix, r)
 u_exact = element.tabulate_dofs(
     lambda x: np.exp(-1 / (2 * sigma**2) * ((x[0] - x0[0]) ** 2 + (x[1] - x0[1]) ** 2))
 )
 error = u_numerical - u_exact
 
-error_nrm = two_norm(error, element, n_q)
-print(f"degree = {degree}")
+rel_error_nrm = two_norm(error, element, n_q) / two_norm(u_exact, element, n_q)
 condition_number = np.linalg.cond(stiffness_matrix)
-print(f"condition number = {condition_number:8.2e}")
-print(f"error norm:      {error_nrm:8.3e}")
+print(f"{degree}: {rel_error_nrm**2:10.4e},")
 
 plot_solution(u_numerical, sigma, x0, "triangle_solution.pdf")
