@@ -13,7 +13,7 @@ from fem.linearelement import LinearElement
 from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
 from fem.utilities import save_to_vtk
-from fem.algorithms import interpolate, assemble_rhs, assemble_lhs, two_norm
+from fem.algorithms import interpolate, assemble_rhs, assemble_lhs_sparse, two_norm
 from fem.quadrature import GaussLegendreQuadratureReferenceTriangle
 
 
@@ -40,7 +40,7 @@ r.data[:] *= (2**2 + 4**2) * np.pi**2 * kappa + omega
 
 u_numerical = Function(fs, "u_numerical")
 
-stiffness_matrix = assemble_lhs(fs, quad, kappa, omega, sparse=True)
+stiffness_matrix = assemble_lhs_sparse(fs, quad, kappa, omega)
 u_petsc = PETSc.Vec().createWithArray(u_numerical.data)
 r_petsc = PETSc.Vec().createWithArray(r.data)
 

@@ -85,23 +85,17 @@ def sparsity_lhs(fs):
     return row_start, col_indices
 
 
-def assemble_lhs(fs, quad, kappa, omega, sparse=False):
-    """Assemble LHS bilinear form into matrix
+def assemble_lhs(fs, quad, kappa, omega):
+    """Assemble LHS bilinear form into (dense) numpy matrix
 
     :arg fs: function space
     :arg quad: quadrature rule
     :arg kappa: coefficient of diffusion term
     :arg omega: coefficient of zero order term
-    :arg sparse: assemble sparse matrix in PETSc format
     """
     mesh = fs.mesh
     element = fs.finiteelement
-    if sparse:
-        row_start, col_indices = sparsity_lhs(fs)
-        stiffness_matrix = PETSc.Mat()
-        stiffness_matrix.createAIJ((fs.ndof, fs.ndof), csr=(row_start, col_indices))
-    else:
-        stiffness_matrix = np.zeros((fs.ndof, fs.ndof))
+    stiffness_matrix = np.zeros((fs.ndof, fs.ndof))
     for cell in range(mesh.ncells):
         # global indices of function space
         j_g = fs.local2global(cell, range(element.ndof))
@@ -125,12 +119,48 @@ def assemble_lhs(fs, quad, kappa, omega, sparse=False):
             phi,
             np.abs(np.linalg.det(J)),
         )
-        if sparse:
-            stiffness_matrix.setValues(j_g, j_g, local_matrix, addv=True)
-        else:
-            stiffness_matrix[np.ix_(j_g, j_g)] += local_matrix
-    if sparse:
-        stiffness_matrix.assemble()
+        stiffness_matrix[np.ix_(j_g, j_g)] += local_matrix
+    return stiffness_matrix
+
+
+def assemble_lhs_sparse(fs, quad, kappa, omega):
+    """Assemble LHS bilinear form into (sparse) PETSc matrix
+
+    :arg fs: function space
+    :arg quad: quadrature rule
+    :arg kappa: coefficient of diffusion term
+    :arg omega: coefficient of zero order term
+    """
+    mesh = fs.mesh
+    element = fs.finiteelement
+    row_start, col_indices = sparsity_lhs(fs)
+    stiffness_matrix = PETSc.Mat()
+    stiffness_matrix.createAIJ((fs.ndof, fs.ndof), csr=(row_start, col_indices))
+    for cell in range(mesh.ncells):
+        # global indices of function space
+        j_g = fs.local2global(cell, range(element.ndof))
+        x_q_hat = np.asarray(quad.nodes)
+        w_q = quad.weights
+        grad_phi = element.tabulate_gradient(x_q_hat)
+        phi = element.tabulate(x_q_hat)
+        J = jacobian(mesh, cell, x_q_hat)
+        JT_J_inv = np.linalg.inv(np.einsum("qji,qjk->qik", J, J))
+        local_matrix = kappa * np.einsum(
+            "q,qjl,qlm,qkm,q->jk",
+            w_q,
+            grad_phi,
+            JT_J_inv,
+            grad_phi,
+            np.abs(np.linalg.det(J)),
+        ) + omega * np.einsum(
+            "q,qj,qk,q->jk",
+            w_q,
+            phi,
+            phi,
+            np.abs(np.linalg.det(J)),
+        )
+        stiffness_matrix.setValues(j_g, j_g, local_matrix, addv=True)
+    stiffness_matrix.assemble()
     return stiffness_matrix
 
 
