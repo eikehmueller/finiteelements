@@ -12,7 +12,13 @@ from fem.utilitymeshes import RectangleMesh
 from fem.polynomialelement import PolynomialElement
 from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
-from fem.algorithms import interpolate, assemble_rhs, assemble_lhs, two_norm
+from fem.algorithms import (
+    interpolate,
+    assemble_rhs,
+    assemble_lhs,
+    assemble_lhs_sparse,
+    two_norm,
+)
 from fem.quadrature import GaussLegendreQuadratureReferenceTriangle
 
 
@@ -44,7 +50,7 @@ def test_solve():
 
     u_numerical = Function(fs, "u_numerical")
 
-    stiffness_matrix = assemble_lhs(fs, quad, kappa, omega, sparse=False)
+    stiffness_matrix = assemble_lhs(fs, quad, kappa, omega)
     u_numerical.data[:] = np.linalg.solve(stiffness_matrix, r.data[:])
 
     u_exact = Function(fs, "u_exact")
@@ -83,7 +89,7 @@ def test_solve_sparse():
 
     u_numerical = Function(fs, "u_numerical")
 
-    stiffness_matrix = assemble_lhs(fs, quad, kappa, omega, sparse=True)
+    stiffness_matrix = assemble_lhs_sparse(fs, quad, kappa, omega)
     u_petsc = PETSc.Vec().createWithArray(u_numerical.data)
     r_petsc = PETSc.Vec().createWithArray(r.data)
 

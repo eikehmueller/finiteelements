@@ -6,7 +6,7 @@ from fem.polynomialelement import PolynomialElement
 from fem.utilitymeshes import RectangleMesh, TriangleMesh
 from fem.functionspace import FunctionSpace
 from fem.quadrature import GaussLegendreQuadratureReferenceTriangle
-from fem.algorithms import assemble_lhs
+from fem.algorithms import assemble_lhs, assemble_lhs_sparse
 from fem.auxilliary import csr_as_dense
 
 
@@ -23,6 +23,6 @@ def test_sparse_assembly(degree):
 
     quad = GaussLegendreQuadratureReferenceTriangle(2 * degree)
 
-    sparse_stiffness_matrix = assemble_lhs(fs, quad, kappa, omega, sparse=True)
-    dense_stiffness_matrix = assemble_lhs(fs, quad, kappa, omega, sparse=False)
+    sparse_stiffness_matrix = assemble_lhs_sparse(fs, quad, kappa, omega)
+    dense_stiffness_matrix = assemble_lhs(fs, quad, kappa, omega)
     assert np.allclose(csr_as_dense(sparse_stiffness_matrix), dense_stiffness_matrix)
