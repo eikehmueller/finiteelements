@@ -4,12 +4,13 @@ from fem.quadrature import (
 )
 import pytest
 import numpy as np
+import math
 
 
-@pytest.mark.parametrize("degree", [1, 2, 3, 4])
-def test_weight_sum(degree):
+@pytest.mark.parametrize("npoints", [1, 2, 3, 4])
+def test_weight_sum(npoints):
     """Check that weights sum up to 1/2"""
-    quadrature = GaussLegendreQuadratureReferenceTriangle(degree)
+    quadrature = GaussLegendreQuadratureReferenceTriangle(npoints)
     tolerance = 1.0e-9
     assert abs(np.sum(quadrature.weights) - 1 / 2) < tolerance
 
@@ -25,12 +26,31 @@ def test_quartic_integration():
     assert abs(integral - 1 / 2 * 1 / 30**2) < tolerance
 
 
-@pytest.mark.parametrize("degree", [1, 2, 3, 4])
-def test_weight_sum_line(degree):
+@pytest.mark.parametrize("npoints", [1, 2, 3, 4, 5])
+def test_exact_integration(npoints):
+    """Check that all monomials up to 2*npoints+1 are integrated exactly"""
+    quadrature = GaussLegendreQuadratureReferenceTriangle(npoints)
+    dop = quadrature.degree_of_precision
+    error = []
+    for z0 in range(dop + 1):
+        for z1 in range(dop + 1 - z0):
+            s_numerical = 0
+            for w, xi in zip(quadrature.weights, quadrature.nodes):
+                s_numerical += w * xi[0] ** z0 * xi[1] ** z1
+            s_exact = (
+                math.factorial(z0) * math.factorial(z1) / math.factorial(z0 + z1 + 2)
+            )
+            error.append(s_numerical - s_exact)
+    tolerance = 1.0e-9
+    assert np.allclose(error, 0, rtol=tolerance)
+
+
+@pytest.mark.parametrize("npoints", [1, 2, 3, 4])
+def test_weight_sum_line(npoints):
     """Check that weights sum up to ||b-a||"""
     v_a = np.asarray([0.2, 0.7])
     v_b = np.asarray([0.8, 1.4])
-    quadrature = GaussLegendreQuadratureLineSegment(v_a, v_b, degree)
+    quadrature = GaussLegendreQuadratureLineSegment(v_a, v_b, npoints)
     tolerance = 1.0e-9
     assert abs(np.sum(quadrature.weights) - np.linalg.norm(v_b - v_a)) < tolerance
 
