@@ -1,6 +1,7 @@
 from fem.quadrature import (
     GaussLegendreQuadratureLineSegment,
     GaussLegendreQuadratureReferenceTriangle,
+    ThreePointQuadratureReferenceTriangle,
 )
 import pytest
 import numpy as np
@@ -30,6 +31,24 @@ def test_quartic_integration():
 def test_exact_integration(npoints):
     """Check that all monomials up to 2*npoints+1 are integrated exactly"""
     quadrature = GaussLegendreQuadratureReferenceTriangle(npoints)
+    dop = quadrature.degree_of_precision
+    error = []
+    for z0 in range(dop + 1):
+        for z1 in range(dop + 1 - z0):
+            s_numerical = 0
+            for w, xi in zip(quadrature.weights, quadrature.nodes):
+                s_numerical += w * xi[0] ** z0 * xi[1] ** z1
+            s_exact = (
+                math.factorial(z0) * math.factorial(z1) / math.factorial(z0 + z1 + 2)
+            )
+            error.append(s_numerical - s_exact)
+    tolerance = 1.0e-9
+    assert np.allclose(error, 0, rtol=tolerance)
+
+
+def test_threepoint_exact_integration():
+    """Check that all monomials up to degree 2 are integrated exactly"""
+    quadrature = ThreePointQuadratureReferenceTriangle()
     dop = quadrature.degree_of_precision
     error = []
     for z0 in range(dop + 1):
