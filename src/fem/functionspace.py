@@ -56,38 +56,39 @@ class FunctionSpace:
             + self.mesh.ncells * self.finiteelement.ndof_per_interior
         )
 
-    def local2global(self, cell, idx):
+    def local2global(self, alpha, ell):
         """Map local dof-index to global dof-index in a given cell
 
         The method returns either a single global dof-index if idx is an integer or a list of global
         dof-indices if idx is iterable.
 
-        :arg cell: index of cell
-        :arg idx: local dof-index or iterable of local dof-indices
+        :arg alpha: index of cell
+        :arg ell: local dof-index or iterable of local dof-indices
         """
-        if isinstance(idx, Iterable):
-            return [self._local2global(cell, j) for j in idx]
+        if isinstance(ell, Iterable):
+            return [self._local2global(alpha, j) for j in ell]
         else:
-            self._local2global(cell, idx)
+            self._local2global(alpha, ell)
 
-    def _local2global(self, cell, j):
+    def _local2global(self, alpha, ell):
         """Map a single local dof-index to global dof-index in a given cell
 
-        :arg cell: index of cell
-        :arg j: local dof-index
+        :arg alpha: index of cell
+        :arg ell: local dof-index
         """
-        entity_type, i, k = self.finiteelement.inverse_dofmap(j)
+        entity_type, i, k = self.finiteelement.inverse_dofmap(ell)
         if entity_type == "vertex":
             # dof is associated with vertex v
-            v = self.mesh.cell2vertex[cell][i]
+            v = self.mesh.cell2vertex[alpha][i]
             return v * self.finiteelement.ndof_per_vertex + k
 
         elif entity_type == "facet":
             # dof is associated with facet
-            f = self.mesh.cell2facet[cell][i]
+            f = self.mesh.cell2facet[alpha][i]
             # check whether facet is oriented in the same direction as the local facet
             aligned_orientation = (
-                self.mesh.facet2vertex[f][0] == self.mesh.cell2vertex[cell][(i + 1) % 3]
+                self.mesh.facet2vertex[f][0]
+                == self.mesh.cell2vertex[alpha][(i + 1) % 3]
             )
             k_local = (
                 k if aligned_orientation else self.finiteelement.ndof_per_facet - k - 1
@@ -102,6 +103,6 @@ class FunctionSpace:
             return (
                 self.mesh.nvertices * self.finiteelement.ndof_per_vertex
                 + self.mesh.nfacets * self.finiteelement.ndof_per_facet
-                + cell * self.finiteelement.ndof_per_interior
+                + alpha * self.finiteelement.ndof_per_interior
                 + k
             )
