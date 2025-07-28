@@ -94,7 +94,7 @@ class FiniteElement(ABC):
         """
         if entity_type == "vertex":
             return self.ndof_per_vertex * i + k
-        elif entity_type == "vertex":
+        elif entity_type == "facet":
             return 3 * self.ndof_per_vertex + self.ndof_per_facet * i + k
         elif entity_type == "interior":
             return 3 * (self.ndof_per_vertex + self.ndof_per_facet) + k

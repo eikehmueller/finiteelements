@@ -68,3 +68,11 @@ def test_linearelement_dof_tabulation(element):
     fhat = lambda x: np.exp(0.5 + x[..., 0] + 2 * x[..., 1])
     nodal_points = np.asarray([[0, 0], [1, 0], [0, 1]])
     assert np.allclose(fhat(nodal_points), element.tabulate_dofs(fhat))
+
+
+def test_dofmap(element):
+    """Check that dof-map works as expected"""
+    indices = [
+        element.dofmap(*element.inverse_dofmap(ell)) for ell in range(element.ndof)
+    ]
+    assert np.allclose(indices, list(range(element.ndof)))

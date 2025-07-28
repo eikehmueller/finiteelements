@@ -112,3 +112,13 @@ def test_agrees_with_linear_gradient_vectorised(rng):
         element_lin.tabulate_gradient(xi),
         element_poly.tabulate_gradient(xi),
     )
+
+
+@pytest.mark.parametrize("degree", [1, 2, 3, 4])
+def test_dofmap(degree):
+    """Check that dof-map works as expected"""
+    element = PolynomialElement(degree)
+    indices = [
+        element.dofmap(*element.inverse_dofmap(ell)) for ell in range(element.ndof)
+    ]
+    assert np.allclose(indices, list(range(element.ndof)))
