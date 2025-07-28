@@ -13,16 +13,16 @@ from fem.linearelement import LinearElement
 from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
 from fem.utilities import save_to_vtk
-from fem.algorithms import interpolate, assemble_rhs, assemble_lhs_sparse, two_norm
+from fem.algorithms import assemble_rhs, assemble_lhs_sparse, two_norm
 from fem.quadrature import GaussLegendreQuadratureReferenceTriangle
 
 
 def f(x):
-    """function to interpolate"""
+    """function to project"""
     return np.cos(2 * np.pi * x[0]) * np.cos(4 * np.pi * x[1])
 
 
-nref = 6
+nref = 5
 # Coeffcient of diffusion term
 kappa = 0.9
 # Coefficient of zero order term
@@ -51,7 +51,17 @@ ksp.solve(r_petsc, u_petsc)
 
 u_exact = Function(fs, "u_exact")
 
-interpolate(f, u_exact)
+r_mass = CoFunction(fs)
+assemble_rhs(f, r_mass, quad)
+
+mass_matrix = assemble_lhs_sparse(fs, quad, 0, 1)
+u_mass_petsc = PETSc.Vec().createWithArray(u_exact.data)
+r_mass_petsc = PETSc.Vec().createWithArray(r_mass.data)
+
+ksp_mass = PETSc.KSP().create()
+ksp_mass.setOperators(mass_matrix)
+ksp_mass.setFromOptions()
+ksp_mass.solve(r_mass_petsc, u_mass_petsc)
 
 error = Function(fs, "error")
 error.data[:] = u_numerical.data[:] - u_exact.data[:]
