@@ -165,3 +165,33 @@ def two_norm(w, quad):
         w_local = w.data[j_g]
         nrm += w_local @ local_matrix @ w_local
     return np.sqrt(nrm)
+
+
+def error_nrm(u_numerical, u_exact, quad):
+    """Compute L2 error norm
+
+    :arg u_numerical: numerical solution, must be an instance of Function
+    :arg u_exact: function, must be callable everywhere in the domain
+    :arg quad: quadrature rule
+    """
+    fs = u_numerical.functionspace
+    mesh = fs.mesh
+    fs_coord = mesh.coordinates.functionspace
+    element = fs.finiteelement
+    element_coord = fs_coord.finiteelement
+    error_nrm_2 = 0
+    for cell in range(mesh.ncells):
+        # global indices of coordinate field
+        j_g_coord = fs_coord.local2global(cell, range(element_coord.ndof))
+        # global indices of numerical solution
+        j_g_r = fs.local2global(cell, range(element.ndof))
+        x_dof_vector = mesh.coordinates.data[j_g_coord]
+        x_q_hat = np.asarray(quad.nodes)
+        w_q = quad.weights
+        u_exact_K = u_exact(np.dot(x_dof_vector, element_coord.tabulate(x_q_hat)).T)
+        u_numerical_K = u_numerical.data[j_g_r]
+        phi = element.tabulate(x_q_hat)
+        error_K = u_exact_K - phi @ u_numerical_K
+        J = jacobian(mesh, cell, x_q_hat)
+        error_nrm_2 += np.sum(w_q * error_K**2 * np.abs(np.linalg.det(J)))
+    return np.sqrt(error_nrm_2)
