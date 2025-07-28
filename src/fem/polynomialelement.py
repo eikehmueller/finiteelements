@@ -141,9 +141,10 @@ class PolynomialElement(FiniteElement):
         :arg zeta: point zeta=(x,y) at which the basis functions are to be evaluated; can also be a
                  matrix of shape (npoints,2).
         """
+        _zeta = np.asarray(zeta)
         mat = np.squeeze(
             self._vandermonde_matrix(
-                np.expand_dims(zeta, axis=list(range(2 - zeta.ndim))), grad=False
+                np.expand_dims(_zeta, axis=list(range(2 - _zeta.ndim))), grad=False
             )
             @ self._coefficients
         )
@@ -159,11 +160,12 @@ class PolynomialElement(FiniteElement):
         :arg zeta: point zeta=(x,y) at which the gradients of the  basis functions are to be evaluated;
                  can also be a matrix of shape (npoints,2).
         """
+        _zeta = np.asarray(zeta)
         mat = np.squeeze(
             np.einsum(
                 "imk,mj->ijk",
                 self._vandermonde_matrix(
-                    np.expand_dims(zeta, axis=list(range(2 - zeta.ndim))), grad=True
+                    np.expand_dims(_zeta, axis=list(range(2 - _zeta.ndim))), grad=True
                 ),
                 self._coefficients,
             )
