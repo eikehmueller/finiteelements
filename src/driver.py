@@ -2,13 +2,19 @@
 
 import numpy as np
 import functools
+import sys
+
+import petsc4py
+
+petsc4py.init(sys.argv)
+from petsc4py import PETSc
 
 from fem.utilitymeshes import RectangleMesh
 from fem.linearelement import LinearElement
 from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
-from fem.utilities import save_to_vtk
-from fem.algorithms import assemble_rhs, assemble_lhs, two_norm, error_nrm
+from fem.utilities import save_to_vtk, measure_time
+from fem.algorithms import assemble_rhs, assemble_lhs, assemble_lhs_sparse, error_nrm
 from fem.quadrature import GaussLegendreQuadratureReferenceTriangle
 
 
@@ -22,7 +28,7 @@ def f(x, s):
 
 
 # Number of mesh refinements
-nref = 5
+nref = 6
 # Coeffcient of diffusion term
 kappa = 0.9
 # Coefficient of zero order term
@@ -38,36 +44,64 @@ mesh = RectangleMesh(Lx=1, Ly=1, nref=nref)
 fs = FunctionSpace(mesh, element)
 # Quadrature rule
 quad = GaussLegendreQuadratureReferenceTriangle(2)
+# Use sparse matrices
+sparse_matrices = True
+
+print(f"nref = {nref}")
+print(f"number of unknowns = {fs.ndof}")
+print()
 
 # Construct right hand side
 # (s_0^2 + s_1^2)*pi^2*u(x)
 b_h = CoFunction(fs)
-assemble_rhs(functools.partial(f, s=s), b_h, quad)
+with measure_time("assemble right hand side"):
+    assemble_rhs(functools.partial(f, s=s), b_h, quad)
 b_h.data[:] *= (s[0] ** 2 + s[1] ** 2) * np.pi**2 * kappa + omega
 
 # Numerical solution
 u_h = Function(fs, "u_numerical")
 
 # Stiffness matrix
-stiffness_matrix = assemble_lhs(fs, quad, kappa, omega)
+with measure_time("assemble stiffness matrix"):
+    if sparse_matrices:
+        stiffness_matrix = assemble_lhs_sparse(fs, quad, kappa, omega)
+    else:
+        stiffness_matrix = assemble_lhs(fs, quad, kappa, omega)
 
 # Solve linear system M^{(h)} u^{(h)} = b^{(h)}
-u_h.data[:] = np.linalg.solve(stiffness_matrix, b_h.data)
+with measure_time("solve linear system"):
+    if sparse_matrices:
+        u_petsc = PETSc.Vec().createWithArray(u_h.data)
+        b_petsc = PETSc.Vec().createWithArray(b_h.data)
+        ksp = PETSc.KSP().create()
+        ksp.setOperators(stiffness_matrix)
+        ksp.setFromOptions()
+        ksp.solve(b_petsc, u_petsc)
+    else:
+        u_h.data[:] = np.linalg.solve(stiffness_matrix, b_h.data)
 
 u_exact = Function(fs, "u_exact")
 
 b_h = CoFunction(fs)
 assemble_rhs(functools.partial(f, s=s), b_h, quad)
 
-# Mass matrix
-mass_matrix = assemble_lhs(fs, quad, 0, 1)
-
 # Solve linear system M^{(h)} u_{exact} = b^{(h)}
-u_exact.data[:] = np.linalg.solve(mass_matrix, b_h.data)
+if sparse_matrices:
+    mass_matrix = assemble_lhs_sparse(fs, quad, 0, 1)
+    u_petsc = PETSc.Vec().createWithArray(u_exact.data)
+    b_petsc = PETSc.Vec().createWithArray(b_h.data)
+    ksp = PETSc.KSP().create()
+    ksp.setOperators(mass_matrix)
+    ksp.setFromOptions()
+    ksp.solve(b_petsc, u_petsc)
+else:
+    mass_matrix = assemble_lhs(fs, quad, 0, 1)
+    u_exact.data[:] = np.linalg.solve(mass_matrix, b_h.data)
 
 error_norm = error_nrm(u_h, functools.partial(f, s=s), quad)
 
-print(f"nref = {nref}, error = {error_norm}")
+print()
+print(f"error = {error_norm}")
 
 # Compute error
 error = Function(fs, "error")

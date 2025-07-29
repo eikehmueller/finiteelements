@@ -1,5 +1,7 @@
 """Some utilities for visualisation etc."""
 
+from contextlib import contextmanager
+import time
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Polygon
@@ -8,7 +10,28 @@ from matplotlib.collections import PatchCollection
 from fem.linearelement import LinearElement
 from fem.polynomialelement import PolynomialElement
 
-__all__ = ["save_to_vtk", "visualise_mesh", "visualise_element", "visualise_quadrature"]
+__all__ = [
+    "measure_time",
+    "save_to_vtk",
+    "visualise_mesh",
+    "visualise_element",
+    "visualise_quadrature",
+]
+
+
+@contextmanager
+def measure_time(label):
+    """Measure the time it takes to execute a block of code
+
+    :arg label: label for the time measurement
+    """
+    t_start = time.perf_counter()
+    try:
+        yield
+    finally:
+        t_finish = time.perf_counter()
+        t_elapsed = t_finish - t_start
+        print(f"time [{label}] = {t_elapsed:8.2e} s")
 
 
 def save_to_vtk(u, filename):
