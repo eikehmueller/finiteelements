@@ -11,6 +11,7 @@ from petsc4py import PETSc
 
 from fem.utilitymeshes import RectangleMesh
 from fem.linearelement import LinearElement
+from fem.polynomialelement import PolynomialElement
 from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
 from fem.utilities import save_to_vtk, measure_time
@@ -35,9 +36,14 @@ kappa = 0.9
 omega = 0.4
 # Wave vector
 s = [2, 4]
+# Polynomial degree of the finite element
+degree = 1
 
 # Finite element
-element = LinearElement()
+if degree == 1:
+    element = LinearElement()
+else:
+    element = PolynomialElement(degree)
 # Mesh
 mesh = RectangleMesh(Lx=1, Ly=1, nref=nref)
 # Function space
@@ -110,6 +116,7 @@ error = Function(fs, "error")
 error.data[:] = u_h.data[:] - u_exact.data[:]
 
 # Save solution and error to .vtk file
-save_to_vtk(u_exact, "u_exact.vtk")
-save_to_vtk(u_h, "u_numerical.vtk")
-save_to_vtk(error, "error.vtk")
+if element is LinearElement:
+    save_to_vtk(u_exact, "u_exact.vtk")
+    save_to_vtk(u_h, "u_numerical.vtk")
+    save_to_vtk(error, "error.vtk")
