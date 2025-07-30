@@ -2,7 +2,7 @@
 
 import numpy as np
 
-__all__ = ["jacobian", "csr_as_dense"]
+__all__ = ["jacobian"]
 
 
 def jacobian(mesh, alpha, zeta):
