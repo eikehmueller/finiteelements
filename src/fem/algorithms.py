@@ -22,20 +22,22 @@ def assemble_rhs(f, r, quad):
     fs_coord = mesh.coordinates.functionspace
     element = fs.finiteelement
     element_coord = fs_coord.finiteelement
-    for cell in range(mesh.ncells):
-        # global indices of coordinate field
-        j_g_coord = fs_coord.local2global(cell, range(element_coord.ndof))
-        # global indices of RHS
-        j_g_r = fs.local2global(cell, range(element.ndof))
-        x_dof_vector = mesh.coordinates.data[j_g_coord]
-        x_q_hat = np.asarray(quad.nodes)
+    for alpha in range(mesh.ncells):
+        # local dof-indices of coordinate field
+        ell_coord = range(element_coord.ndof)
+        # global dof-indices of coordinate field
+        ell_g_coord = fs_coord.local2global(alpha, ell_coord)
+        # local dof-indices of RHS vector
+        ell = range(element.ndof)
+        # global dof-indices of RHS vector
+        ell_g = fs.local2global(alpha, ell)
+        x_dof_vector = mesh.coordinates.data[ell_g_coord]
+        zeta = np.asarray(quad.nodes)
         w_q = quad.weights
-        f_X = f(np.dot(x_dof_vector, element_coord.tabulate(x_q_hat)).T)
-        phi = element.tabulate(x_q_hat)
-        J = jacobian(mesh, cell, x_q_hat)
-        r.data[j_g_r] += np.einsum(
-            "q,qi,q,q->i", w_q, phi, f_X, np.abs(np.linalg.det(J))
-        )
+        f_X = f(np.dot(x_dof_vector, element_coord.tabulate(zeta)).T)
+        T = element.tabulate(zeta)
+        J = jacobian(mesh, alpha, zeta)
+        r.data[ell_g] += np.einsum("q,qi,q,q->i", w_q, T, f_X, np.abs(np.linalg.det(J)))
 
 
 def sparsity_lhs(fs):
@@ -48,9 +50,9 @@ def sparsity_lhs(fs):
     indices = [set() for _ in range(fs.ndof)]
     for cell in range(mesh.ncells):
         # global indices of function space
-        j_g = fs.local2global(cell, range(element.ndof))
-        for j in j_g:
-            indices[j].update(set(j_g))
+        J_global = fs.local2global(cell, range(element.ndof))
+        for ell_g in J_global:
+            indices[ell_g].update(set(J_global))
     row_start = [0]
     col_indices = []
     for row in indices:
@@ -70,30 +72,31 @@ def assemble_lhs(fs, quad, kappa, omega):
     mesh = fs.mesh
     element = fs.finiteelement
     stiffness_matrix = np.zeros((fs.ndof, fs.ndof))
-    for cell in range(mesh.ncells):
+    for alpha in range(mesh.ncells):
         # global indices of function space
-        j_g = fs.local2global(cell, range(element.ndof))
-        x_q_hat = np.asarray(quad.nodes)
+        ell = range(element.ndof)
+        ell_g = fs.local2global(alpha, ell)
+        zeta = np.asarray(quad.nodes)
         w_q = quad.weights
-        grad_phi = element.tabulate_gradient(x_q_hat)
-        phi = element.tabulate(x_q_hat)
-        J = jacobian(mesh, cell, x_q_hat)
+        T_grad = element.tabulate_gradient(zeta)
+        T = element.tabulate(zeta)
+        J = jacobian(mesh, alpha, zeta)
         JT_J_inv = np.linalg.inv(np.einsum("qji,qjk->qik", J, J))
         local_matrix = kappa * np.einsum(
             "q,qjl,qlm,qkm,q->jk",
             w_q,
-            grad_phi,
+            T_grad,
             JT_J_inv,
-            grad_phi,
+            T_grad,
             np.abs(np.linalg.det(J)),
         ) + omega * np.einsum(
             "q,qj,qk,q->jk",
             w_q,
-            phi,
-            phi,
+            T,
+            T,
             np.abs(np.linalg.det(J)),
         )
-        stiffness_matrix[np.ix_(j_g, j_g)] += local_matrix
+        stiffness_matrix[np.ix_(ell_g, ell_g)] += local_matrix
     return stiffness_matrix
 
 
@@ -110,30 +113,32 @@ def assemble_lhs_sparse(fs, quad, kappa, omega):
     row_start, col_indices = sparsity_lhs(fs)
     stiffness_matrix = PETSc.Mat()
     stiffness_matrix.createAIJ((fs.ndof, fs.ndof), csr=(row_start, col_indices))
-    for cell in range(mesh.ncells):
-        # global indices of function space
-        j_g = fs.local2global(cell, range(element.ndof))
-        x_q_hat = np.asarray(quad.nodes)
+    for alpha in range(mesh.ncells):
+        # local dof-indices of function space
+        ell = range(element.ndof)
+        # global dof-indices of function space
+        ell_g = fs.local2global(alpha, ell)
+        zeta = np.asarray(quad.nodes)
         w_q = quad.weights
-        grad_phi = element.tabulate_gradient(x_q_hat)
-        phi = element.tabulate(x_q_hat)
-        J = jacobian(mesh, cell, x_q_hat)
+        T_grad = element.tabulate_gradient(zeta)
+        T = element.tabulate(zeta)
+        J = jacobian(mesh, alpha, zeta)
         JT_J_inv = np.linalg.inv(np.einsum("qji,qjk->qik", J, J))
         local_matrix = kappa * np.einsum(
             "q,qjl,qlm,qkm,q->jk",
             w_q,
-            grad_phi,
+            T_grad,
             JT_J_inv,
-            grad_phi,
+            T_grad,
             np.abs(np.linalg.det(J)),
         ) + omega * np.einsum(
             "q,qj,qk,q->jk",
             w_q,
-            phi,
-            phi,
+            T,
+            T,
             np.abs(np.linalg.det(J)),
         )
-        stiffness_matrix.setValues(j_g, j_g, local_matrix, addv=True)
+        stiffness_matrix.setValues(ell_g, ell_g, local_matrix, addv=True)
     stiffness_matrix.assemble()
     return stiffness_matrix
 
@@ -151,18 +156,22 @@ def error_nrm(u_numerical, u_exact, quad):
     element = fs.finiteelement
     element_coord = fs_coord.finiteelement
     error_nrm_2 = 0
-    for cell in range(mesh.ncells):
-        # global indices of coordinate field
-        j_g_coord = fs_coord.local2global(cell, range(element_coord.ndof))
-        # global indices of numerical solution
-        j_g_r = fs.local2global(cell, range(element.ndof))
-        x_dof_vector = mesh.coordinates.data[j_g_coord]
-        x_q_hat = np.asarray(quad.nodes)
+    for alpha in range(mesh.ncells):
+        # local dof-indices of coordinate field
+        ell_coord = range(element_coord.ndof)
+        # global dof-indices of coordinate field
+        ell_g_coord = fs_coord.local2global(alpha, ell_coord)
+        # local dof-indices of numerical solution
+        ell = range(element.ndof)
+        # global dof-indices of numerical solution
+        ell_g = fs.local2global(alpha, ell)
+        x_dof_vector = mesh.coordinates.data[ell_g_coord]
+        zeta = np.asarray(quad.nodes)
         w_q = quad.weights
-        u_exact_K = u_exact(np.dot(x_dof_vector, element_coord.tabulate(x_q_hat)).T)
-        u_numerical_K = u_numerical.data[j_g_r]
-        phi = element.tabulate(x_q_hat)
-        error_K = u_exact_K - phi @ u_numerical_K
-        J = jacobian(mesh, cell, x_q_hat)
+        u_exact_K = u_exact(np.dot(x_dof_vector, element_coord.tabulate(zeta)).T)
+        u_numerical_K = u_numerical.data[ell_g]
+        T = element.tabulate(zeta)
+        error_K = u_exact_K - T @ u_numerical_K
+        J = jacobian(mesh, alpha, zeta)
         error_nrm_2 += np.sum(w_q * error_K**2 * np.abs(np.linalg.det(J)))
     return np.sqrt(error_nrm_2)
