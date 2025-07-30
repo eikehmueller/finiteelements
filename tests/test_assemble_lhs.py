@@ -7,7 +7,6 @@ from fem.utilitymeshes import RectangleMesh, TriangleMesh
 from fem.functionspace import FunctionSpace
 from fem.quadrature import GaussLegendreQuadratureReferenceTriangle
 from fem.algorithms import assemble_lhs, assemble_lhs_sparse
-from fem.auxilliary import csr_as_dense
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4, 5])
@@ -25,4 +24,5 @@ def test_sparse_assembly(degree):
 
     sparse_stiffness_matrix = assemble_lhs_sparse(fs, quad, kappa, omega)
     dense_stiffness_matrix = assemble_lhs(fs, quad, kappa, omega)
-    assert np.allclose(csr_as_dense(sparse_stiffness_matrix), dense_stiffness_matrix)
+    sparse_stiffness_matrix.convert("dense")
+    assert np.allclose(sparse_stiffness_matrix.getDenseArray(), dense_stiffness_matrix)
