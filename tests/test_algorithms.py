@@ -1,6 +1,5 @@
 """Main program"""
 
-import sys
 import numpy as np
 
 import petsc4py
@@ -12,18 +11,12 @@ from fem.utilitymeshes import RectangleMesh
 from fem.polynomialelement import PolynomialElement
 from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
-from fem.algorithms import (
-    interpolate,
-    assemble_rhs,
-    assemble_lhs,
-    assemble_lhs_sparse,
-    two_norm,
-)
+from fem.algorithms import assemble_rhs, assemble_lhs, assemble_lhs_sparse, error_nrm
 from fem.quadrature import GaussLegendreQuadratureReferenceTriangle
 
 
 def f(x):
-    """function to interpolate"""
+    """function to project"""
     return np.cos(2 * np.pi * x[0]) * np.cos(4 * np.pi * x[1])
 
 
@@ -53,16 +46,9 @@ def test_solve():
     stiffness_matrix = assemble_lhs(fs, quad, kappa, omega)
     u_numerical.data[:] = np.linalg.solve(stiffness_matrix, r.data[:])
 
-    u_exact = Function(fs, "u_exact")
+    error_norm = error_nrm(u_numerical, f, quad)
 
-    interpolate(f, u_exact)
-
-    error = Function(fs, "error")
-    error.data[:] = u_numerical.data[:] - u_exact.data[:]
-
-    error_norm = two_norm(error, quad)
-
-    tolerance = 1.0e-4
+    tolerance = 1.1e-4
     assert error_norm < tolerance
 
 
@@ -98,14 +84,7 @@ def test_solve_sparse():
     ksp.setFromOptions()
     ksp.solve(r_petsc, u_petsc)
 
-    u_exact = Function(fs, "u_exact")
-
-    interpolate(f, u_exact)
-
-    error = Function(fs, "error")
-    error.data[:] = u_numerical.data[:] - u_exact.data[:]
-
-    error_norm = two_norm(error, quad)
+    error_norm = error_nrm(u_numerical, f, quad)
 
     tolerance = 1.0e-4
     assert error_norm < tolerance

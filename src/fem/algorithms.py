@@ -6,7 +6,7 @@ __all__ = [
     "assemble_rhs",
     "sparsity_lhs",
     "assemble_lhs",
-    "two_norm",
+    "error_norm",
 ]
 
 
@@ -136,35 +136,6 @@ def assemble_lhs_sparse(fs, quad, kappa, omega):
         stiffness_matrix.setValues(j_g, j_g, local_matrix, addv=True)
     stiffness_matrix.assemble()
     return stiffness_matrix
-
-
-def two_norm(w, quad):
-    """Compute L2 norm of a function
-
-    :arg w: finite element function
-    :arg quad: quadrature rule
-    """
-    fs = w.functionspace
-    mesh = fs.mesh
-    element = fs.finiteelement
-    nrm = 0
-    for cell in range(mesh.ncells):
-        # global indices of function space
-        j_g = fs.local2global(cell, range(element.ndof))
-        x_q_hat = np.asarray(quad.nodes)
-        w_q = quad.weights
-        phi = element.tabulate(x_q_hat)
-        J = jacobian(mesh, cell, x_q_hat)
-        local_matrix = np.einsum(
-            "q,qj,qk,q->jk",
-            w_q,
-            phi,
-            phi,
-            np.abs(np.linalg.det(J)),
-        )
-        w_local = w.data[j_g]
-        nrm += w_local @ local_matrix @ w_local
-    return np.sqrt(nrm)
 
 
 def error_nrm(u_numerical, u_exact, quad):
