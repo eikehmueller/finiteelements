@@ -92,7 +92,9 @@ if sparse_matrices:
     b_petsc = PETSc.Vec().createWithArray(b_h.data)
     ksp = PETSc.KSP().create()
     ksp.setOperators(mass_matrix)
-    ksp.setFromOptions()
+    ksp.setType("cg")
+    ksp.getPC().setType("jacobi")
+    ksp.setTolerances(rtol=1e-12)
     ksp.solve(b_petsc, u_petsc)
 else:
     mass_matrix = assemble_lhs(fs, quad, 0, 1)
