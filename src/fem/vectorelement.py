@@ -73,36 +73,38 @@ class VectorElement(FiniteElement):
             )
         return dof_vector
 
-    def tabulate(self, xi):
+    def tabulate(self, zeta):
         """Tabulate all basis functions at a point inside the reference cell
 
         Returns a vector of length ndof with the evaluation of all basis functions.
 
-        :arg xi: point xi=(x,y) at which the basis functions are to be evaluated.
+        :arg zeta: two-dimensional point zeta at which the basis functions are to
+                be evaluated.
         """
-        scalar_tabulation = self._finiteelement.tabulate(xi)
+        scalar_tabulation = self._finiteelement.tabulate(zeta)
         value = (
             np.zeros((self.ndof, 2))
-            if xi.ndim == 1
-            else np.zeros((xi.shape[0], self.ndof, 2))
+            if zeta.ndim == 1
+            else np.zeros((zeta.shape[0], self.ndof, 2))
         )
         for dim in (0, 1):
             value[..., dim::2, dim] = scalar_tabulation
         return value
 
-    def tabulate_gradient(self, xi):
+    def tabulate_gradient(self, zeta):
         """Tabulate the gradients of all basis functions at a point inside the reference cell
 
         Returns an vector of shape (ndof,2,2) with the evaluation of the gradients of all
         basis functions.
 
-        :arg xi: point xi=(x,y) at which the gradients of the basis functions are to be evaluated.
+        :arg zeta: two-dimensional point xi at which the gradients of the basis
+                functions are to be evaluated.
         """
-        scalar_grad = self._finiteelement.tabulate_gradient(xi)
+        scalar_grad = self._finiteelement.tabulate_gradient(zeta)
         grad = (
             np.zeros((self.ndof, 2, 2))
-            if xi.ndim == 1
-            else np.zeros((xi.shape[0], self.ndof, 2, 2))
+            if zeta.ndim == 1
+            else np.zeros((zeta.shape[0], self.ndof, 2, 2))
         )
         for dim in (0, 1):
             grad[..., dim::2, dim, :] = scalar_grad

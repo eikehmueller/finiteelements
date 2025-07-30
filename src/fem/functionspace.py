@@ -7,34 +7,38 @@ class FunctionSpace:
     """Finite element function space
 
     Defines association of finite element unknowns with a computational mesh.
-    Each unknown has a unique global index i_g = i_g(cell,i) which is related to one (or more) cell
-    and a local index. Here we have that:
+    Each unknown has a unique global index ell_g = ell_g(alpha,ell) which is
+    related to one (or more) cell with index alpha and a local index ell.
+    Here we have that:
 
-        0 <= cell < #cells
-        0 <= i < 3 * (ndof_per_vertex + ndof_per_facet) + ndof_per_interior
-        0 <= i_g < ndof_per_vertex * #vertices + ndof_per_facet * #facets + ndof_per_interior * #cells
+        0 <= alpha < #cells
+        0 <= ell < 3 * (ndof_per_vertex + ndof_per_facet) + ndof_per_interior
+        0 <= ell_g < ndof_per_vertex * #vertices
+                     + ndof_per_facet * #facets
+                     + ndof_per_interior * #cells
 
 
-    Write n_V = ndof_per_vertex, n_F = ndof_per_facet, n_C = ndof_per_cell and n_total = n_V+n_F+n_C.
-    It is assumed that the unknowns are stored in the following order
+    Write n_V = ndof_per_vertex, n_F = ndof_per_facet, n_C = ndof_per_cell and
+    n_total = n_V+n_F+n_C. It is assumed that the unknowns are stored in the following
+    order:
 
         * vertex unknowns:
-            These dofs have global indices 0 <= i_g < n_V * #vertices and are stored on
-            vertices 0,1,2,... in this order, with the unknowns with n_V * V <= i_g < n_V * (V+1)
+            These dofs have global indices 0 <= ell_g < n_V * #vertices and are stored on
+            vertices 0,1,2,... in this order, with the unknowns with n_V * V <= ell_g < n_V * (V+1)
             all stored on vertex V.
-            The local indices are 0 <= i < 3*nV.
+            The local indices are 0 <= ell < 3*nV.
         * facet unknowns:
-            These dofs have global indices n_V * #vertices <= i_g < n_V * #vertices + n_F * #facet
+            These dofs have global indices n_V * #vertices <= ell_g < n_V * #vertices + n_F * #facet
             and are stored on facets 0,1,2,... in this order, with the unknowns with
-            n_V * #vertices + n_F * F <= i_g < n_V * #vertices + n_F * (F+1) all stored on facet F.
-            The local indices are 3*n_V <= i < 3*(nV + n_F).
+            n_V * #vertices + n_F * F <= ell_g < n_V * #vertices + n_F * (F+1) all stored on facet F.
+            The local indices are 3*n_V <= ell < 3*(nV + n_F).
         * cell interior unknowns
             These dofs have global indices
-            n_V * #vertices + n_F * #facet <= i_g < n_total
+            n_V * #vertices + n_F * #facet <= ell_g < n_total
             and are stored in the interiors of cells 0,1,2,... in this order, with the unknowns with
-            n_V * #vertices + n_F * #facets + n_C*C <= i_g < n_V * #vertices + n_F * #facets + n_C*(C+1)
+            n_V * #vertices + n_F * #facets + n_C*C <= ell_g < n_V * #vertices + n_F * #facets + n_C*(C+1)
             all stored in the interior of cell C.
-            The local indices are 3*(n_V+n_F) <= i < 3*(nV + n_F) + n_C.
+            The local indices are 3*(n_V+n_F) <= ell < 3*(nV + n_F) + n_C.
 
     """
 
@@ -66,7 +70,7 @@ class FunctionSpace:
         :arg ell: local dof-index or iterable of local dof-indices
         """
         if isinstance(ell, Iterable):
-            return [self._local2global(alpha, j) for j in ell]
+            return [self._local2global(alpha, _ell) for _ell in ell]
         else:
             self._local2global(alpha, ell)
 
@@ -76,27 +80,25 @@ class FunctionSpace:
         :arg alpha: index of cell
         :arg ell: local dof-index
         """
-        entity_type, i, k = self.finiteelement.inverse_dofmap(ell)
+        entity_type, rho, j = self.finiteelement.inverse_dofmap(ell)
         if entity_type == "vertex":
             # dof is associated with vertex v
-            v = self.mesh.cell2vertex[alpha][i]
-            return v * self.finiteelement.ndof_per_vertex + k
+            gamma = self.mesh.cell2vertex[alpha][rho]
+            return gamma * self.finiteelement.ndof_per_vertex + j
 
         elif entity_type == "facet":
             # dof is associated with facet
-            f = self.mesh.cell2facet[alpha][i]
+            beta = self.mesh.cell2facet[alpha][rho]
             # check whether facet is oriented in the same direction as the local facet
             aligned_orientation = (
-                self.mesh.facet2vertex[f][0]
-                == self.mesh.cell2vertex[alpha][(i + 1) % 3]
+                self.mesh.facet2vertex[beta][0]
+                == self.mesh.cell2vertex[alpha][(rho + 1) % 3]
             )
-            k_local = (
-                k if aligned_orientation else self.finiteelement.ndof_per_facet - k - 1
-            )
+            _j = j if aligned_orientation else self.finiteelement.ndof_per_facet - j - 1
             return (
                 self.mesh.nvertices * self.finiteelement.ndof_per_vertex
-                + f * self.finiteelement.ndof_per_facet
-                + k_local
+                + beta * self.finiteelement.ndof_per_facet
+                + _j
             )
         else:
             # dof is associated with cell
@@ -104,5 +106,5 @@ class FunctionSpace:
                 self.mesh.nvertices * self.finiteelement.ndof_per_vertex
                 + self.mesh.nfacets * self.finiteelement.ndof_per_facet
                 + alpha * self.finiteelement.ndof_per_interior
-                + k
+                + j
             )

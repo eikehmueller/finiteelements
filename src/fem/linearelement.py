@@ -71,8 +71,8 @@ class LinearElement(FiniteElement):
         If zeta is a matrix of shape (npoints,2) whose columns represent points, then
         an array of shape (npoints,3) will be returned
 
-        :arg zeta: point zeta=(x,y) at which the basis functions are to be evaluated, can also be an
-                 array of shape (npoints,2) whose columns are the points.
+        :arg zeta: two-dimensional point zeta at which the basis functions are to be
+                evaluated, can also be an array of shape (n,2) whose columns are the points.
         """
         return np.asarray(
             [1 - zeta[..., 0] - zeta[..., 1], zeta[..., 0], zeta[..., 1]]
@@ -85,8 +85,9 @@ class LinearElement(FiniteElement):
         basis functions. If zeta is a matrix of shape (npoints,2) whose columns represent points, then
         an array of shape (npoints,3,2)
 
-        :arg zeta: point zeta=(x,y) at which the gradients of the basis functions are to be evaluated, can also be an
-                 array of shape (npoints,2) whose columns are the points.
+        :arg zeta: two-dimensional point zeta at which the gradients of the basis
+                functions are to be evaluated, can also be an array of shape (n,2)
+                whose columns are the points.
         """
         if zeta.ndim == 1:
             return np.asarray([[-1, -1], [1, 0], [0, 1]])

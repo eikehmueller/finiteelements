@@ -28,7 +28,7 @@ def f(x, s):
 
 
 # Number of mesh refinements
-nref = 6
+nref = 7
 # Coeffcient of diffusion term
 kappa = 0.9
 # Coefficient of zero order term

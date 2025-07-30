@@ -42,7 +42,7 @@ class PolynomialElement(FiniteElement):
         self.degree = degree
         # List with powers
         self._powers = [
-            [j, k - j] for k in range(self.degree + 1) for j in range(k + 1)
+            [s0, s1 - s0] for s1 in range(self.degree + 1) for s0 in range(s1 + 1)
         ]
         # List with nodal points
         nodal_points = []
@@ -57,14 +57,14 @@ class PolynomialElement(FiniteElement):
         nodal_points.append([0, 1])
         # nodes associated with facets
         # facet 0
-        for j in range(1, self.degree):
-            nodal_points.append([(self.degree - j) * h, j * h])
+        for s in range(1, self.degree):
+            nodal_points.append([(self.degree - s) * h, s * h])
         # facet 1
-        for j in range(1, self.degree):
-            nodal_points.append([0, (self.degree - j) * h])
+        for s in range(1, self.degree):
+            nodal_points.append([0, (self.degree - s) * h])
         # facet 2
-        for j in range(1, self.degree):
-            nodal_points.append([j * h, 0])
+        for s in range(1, self.degree):
+            nodal_points.append([s * h, 0])
         # nodes associated with interior
         for b in range(1, self.degree - 1):
             for a in range(1, self.degree - b):
@@ -136,10 +136,10 @@ class PolynomialElement(FiniteElement):
         """Evaluate all basis functions at a point inside the reference cell
 
         Returns a vector of length ndof with the evaluation of all basis functions or a matrix
-        of shape (npoints,ndof) if xi contains several points.
+        of shape (npoints,ndof) if zeta contains several points.
 
-        :arg zeta: point zeta=(x,y) at which the basis functions are to be evaluated; can also be a
-                 matrix of shape (npoints,2).
+        :arg zeta: two-dimensional point zeta at which the basis functions are to
+                be evaluated; can also be a matrix of shape (npoints,2).
         """
         _zeta = np.asarray(zeta)
         mat = np.squeeze(
@@ -157,8 +157,8 @@ class PolynomialElement(FiniteElement):
         basis functions. If zeta is a matrix containing several points then the matrix that is
         returned is of shape (npoints,ndof,2)
 
-        :arg zeta: point zeta=(x,y) at which the gradients of the  basis functions are to be evaluated;
-                 can also be a matrix of shape (npoints,2).
+        :arg zeta: two-dimensional point zeta at which the gradients of the  basis
+                functions are to be evaluated; can also be a matrix of shape (npoints,2).
         """
         _zeta = np.asarray(zeta)
         mat = np.squeeze(

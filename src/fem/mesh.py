@@ -2,7 +2,6 @@
 
 from functools import cached_property
 import numpy as np
-from matplotlib import pyplot as plt
 
 from fem.linearelement import LinearElement
 from fem.vectorelement import VectorElement
@@ -20,22 +19,22 @@ class Mesh:
 
     Each mesh cell is of the following form:
 
-        V_2
+        v 2
          *
          ! .
          !  .
          !    .                         F
-         !     . F_0            V_a ----->----- V_b
-     F_1 v      ^
+         !     . F 0            V a ----->----- V b
+     F 1 v      ^
          !   C    .
          !         .
          !          .
          *---->------*
-     V_0       F_2      V_1
+     v 0       F 2      v 1
 
-    The facets are oriented in a counterclockwise orientation. The topology is represented by
-    storing the indices [F_0(C),F_1(C),F_2(C)] (in this order) of the facets of a given cell C
-    in a list cell2facet
+    The facets are oriented in a counterclockwise orientation. The topology is
+    represented by storing the indices [F_0(C),F_1(C),F_2(C)] (in this order) of the
+    facets of a given cell C in a list cell2facet
 
         cell2facet = [[F_0(0),F_1(0),F_2(0)], [F_0(1),F_1(1),F_2(1)],...]
 
@@ -88,10 +87,10 @@ class Mesh:
         return [
             [
                 (
-                    set(self.facet2vertex[self.cell2facet[cell][(j + 1) % 3]])
-                    & set(self.facet2vertex[self.cell2facet[cell][(j + 2) % 3]])
+                    set(self.facet2vertex[self.cell2facet[cell][(rho + 1) % 3]])
+                    & set(self.facet2vertex[self.cell2facet[cell][(rho + 2) % 3]])
                 ).pop()
-                for j in range(3)
+                for rho in range(3)
             ]
             for cell in range(self.ncells)
         ]
@@ -151,37 +150,37 @@ class Mesh:
                 for coarse_facet in coarse_facets
             ]
             # add interior facets
-            for j in range(3):
+            for rho in range(3):
                 fine_facet2vertex.append(
                     sorted(
                         [
-                            facet_centre_vertex[(j + 1) % 3],
-                            facet_centre_vertex[(j + 2) % 3],
+                            facet_centre_vertex[(rho + 1) % 3],
+                            facet_centre_vertex[(rho + 2) % 3],
                         ]
                     )
                 )
             # add interior cells
 
-            coarse2finefacet[coarse_facets[j]][0]
+            coarse2finefacet[coarse_facets[rho]][0]
 
             # fine facets on boundary of coarse cell
             boundary_fine_facets = []
-            for j in range(3):
-                fine_facets = coarse2finefacet[coarse_facets[j]]
+            for rho in range(3):
+                fine_facets = coarse2finefacet[coarse_facets[rho]]
                 if (
                     fine_facet2vertex[fine_facets[0]][0]
-                    == self.cell2vertex[coarse_cell][(j + 1) % 3]
+                    == self.cell2vertex[coarse_cell][(rho + 1) % 3]
                 ):
                     boundary_fine_facets.append(fine_facets)
                 else:
                     boundary_fine_facets.append(fine_facets[::-1])
             # three cells that touch coarse facets
-            for j in range(3):
+            for rho in range(3):
                 fine_cell2facet.append(
                     [
-                        boundary_fine_facets[(j + 2) % 3][1],
-                        boundary_fine_facets[j][0],
-                        facet_idx + (j + 1) % 3,
+                        boundary_fine_facets[(rho + 2) % 3][1],
+                        boundary_fine_facets[rho][0],
+                        facet_idx + (rho + 1) % 3,
                     ]
                 )
             # cell that does not touch any coarse facet

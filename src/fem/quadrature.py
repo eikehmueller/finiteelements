@@ -1,4 +1,4 @@
-"""Quadrature rules on reference triangle"""
+"""Quadrature rules on reference triangle and line segment"""
 
 from abc import ABC, abstractmethod
 import numpy as np
@@ -7,7 +7,6 @@ __all__ = [
     "Quadrature",
     "GaussLegendreQuadratureLineSegment",
     "GaussLegendreQuadratureReferenceTriangle",
-    "ThreePointQuadratureReferenceTriangle",
 ]
 
 
