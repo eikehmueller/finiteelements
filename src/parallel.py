@@ -22,7 +22,7 @@ from mpi4py import MPI
 import numpy as np
 
 
-def parallel_matmul(A, B, C, overlap=False):
+def parallel_matmul(A, B, C, overlap=False, nocomm=False):
     """Parallel matrix-vector product
 
     Compute local part of matrix C = A @ B, where each processor only stores its
@@ -44,7 +44,7 @@ def parallel_matmul(A, B, C, overlap=False):
     req_send = None
     req_recv = None
     for q in range(nproc):
-        if overlap and q < nproc - 1:
+        if not nocomm and overlap and q < nproc - 1:
             req_send = comm.Isend(B, dest=(rank - 1) % nproc)
             req_recv = comm.Irecv(B_recv)
         C[:, :] += (
@@ -52,7 +52,7 @@ def parallel_matmul(A, B, C, overlap=False):
             @ B[:, :]
         )
 
-        if q < nproc - 1:
+        if q < nproc - 1 and not nocomm:
             if overlap:
                 req_send.wait()
                 req_recv.wait()
@@ -96,6 +96,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--nocomm",
+    action="store_true",
+    help="No parallel communication (leads to incorrect results)?",
+)
+
+
+parser.add_argument(
     "--niter",
     action="store",
     default=10,
@@ -126,6 +133,7 @@ if rank == 0:
     print(f" m = {m:8d}")
     print(f" r = {r:8d}")
     print(f" overlap = {args.overlap}")
+    print(f" nocomm  = {args.nocomm}")
 
 rng = np.random.default_rng(seed=411587)
 # Global matrices
@@ -140,12 +148,13 @@ for _ in range(args.niter):
     C_loc = np.zeros(shape=(n_loc, r))
     comm.Barrier()
     t_start = MPI.Wtime()
-    parallel_matmul(A_loc, B_loc, C_loc, args.overlap)
+    parallel_matmul(A_loc, B_loc, C_loc, args.overlap, args.nocomm)
     comm.Barrier()
     t_finish = MPI.Wtime()
     C = np.zeros(shape=(n, r))
     comm.Allgather(C_loc, C)
     t_elapsed += (t_finish - t_start) / args.niter
+    # t_elapsed = min(t_finish - t_start, t_elapsed)
 
 if rank == 0:
     nrm = np.linalg.norm(C - C_true) / np.linalg.norm(C_true)
