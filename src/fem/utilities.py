@@ -3,6 +3,7 @@
 from contextlib import contextmanager
 import time
 import numpy as np
+import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
@@ -353,25 +354,51 @@ def plot_solution(u_numerical, u_exact, element, filename):
 
     T = element.tabulate(XY)
     Z_exact = u_exact(XY).reshape([X.shape[0], X.shape[1]]).T
+    Z_exact[0, -1] = 0
+    Z_exact[0, -2] = 1
     Z_numerical = np.dot(T, u_numerical).reshape([X.shape[0], X.shape[1]]).T
+    Z_numerical[0, -1] = 0
+    Z_numerical[0, -2] = 1
 
     fig, axs = plt.subplots(1, 3)
-    cs = axs[0].contourf(X, Y, Z_exact, levels=100, vmin=0, vmax=1)
-    cbar = fig.colorbar(cs, shrink=1, location="bottom")
-    cbar.ax.tick_params(labelsize=4)
-    axs[0].set_title("exact")
-
-    cs = axs[2].contourf(X, Y, Z_numerical, levels=100, vmin=0, vmax=1)
-    cbar = fig.colorbar(cs, shrink=1, location="bottom")
-    cbar.ax.tick_params(labelsize=4)
-    axs[2].set_title("numerical")
-
-    cs = axs[1].contourf(
-        X, Y, np.log(np.abs(Z_numerical - Z_exact)), levels=100, norm="linear"
+    cs = axs[0].contourf(
+        X,
+        Y,
+        np.clip(Z_exact, a_min=0, a_max=1),
+        levels=100,
+        norm="linear",
+        vmin=0,
+        vmax=1,
     )
-    cbar = fig.colorbar(cs, shrink=1, location="bottom")
-    cbar.ax.tick_params(labelsize=4)
-    axs[1].set_title("log(error)")
+    cbar = fig.colorbar(
+        cs,
+        shrink=1,
+        location="bottom",
+    )
+    cbar.ax.tick_params(labelsize=4, rotation=20)
+    axs[0].set_title("exact", fontsize=10)
+
+    cs = axs[2].contourf(
+        X, Y, np.clip(Z_numerical, a_min=0, a_max=1), levels=100, vmin=0, vmax=1
+    )
+    cbar = fig.colorbar(cs, shrink=1, location="bottom", extend="both")
+    cbar.ax.tick_params(labelsize=4, rotation=20)
+    axs[2].set_title("numerical", fontsize=10)
+    difference = Z_numerical - Z_exact
+    for j in range(difference.shape[0]):
+        difference[-j, j:] = None
+    cs = axs[1].contourf(
+        X, Y, np.log10(np.abs(difference)), levels=100, norm="linear", cmap="plasma"
+    )
+    cbar = fig.colorbar(cs, shrink=1, location="bottom", extend="both")
+    t_old = cbar.ax.get_xticks()
+    print(t_old)
+    t_new = np.arange(int(np.ceil(t_old[0])), int(np.floor(t_old[-1])) + 1)
+    print(t_new)
+    cbar.ax.set_xticks(t_new)
+    cbar.ax.set_xticklabels([f"$10^{{{t}}}$" for t in t_new])
+    cbar.ax.tick_params(labelsize=4, rotation=20)
+    axs[1].set_title(r"$|\text{numerical}-\text{exact}|$", fontsize=10)
 
     for ax in axs:
         ax.set_aspect("equal")
@@ -383,4 +410,5 @@ def plot_solution(u_numerical, u_exact, element, filename):
         )
         p = PatchCollection([mask], color="white", zorder=2)
         ax.add_collection(p)
+        ax.tick_params(axis="both", which="major", labelsize=6)
     plt.savefig(filename, bbox_inches="tight")
