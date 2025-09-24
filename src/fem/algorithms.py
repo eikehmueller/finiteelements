@@ -161,17 +161,19 @@ def error_nrm(u_numerical, u_exact, quad):
         ell_coord = range(element_coord.ndof)
         # global dof-indices of coordinate field
         ell_g_coord = fs_coord.local2global(alpha, ell_coord)
+        x_dof_vector = mesh.coordinates.data[ell_g_coord]
         # local dof-indices of numerical solution
         ell = range(element.ndof)
         # global dof-indices of numerical solution
         ell_g = fs.local2global(alpha, ell)
-        x_dof_vector = mesh.coordinates.data[ell_g_coord]
+        u_numerical_K = u_numerical.data[ell_g]
         zeta = np.asarray(quad.nodes)
         w_q = quad.weights
-        u_exact_K = u_exact(np.dot(x_dof_vector, element_coord.tabulate(zeta)).T)
-        u_numerical_K = u_numerical.data[ell_g]
+        T_coord = element_coord.tabulate(zeta)
+        x_global = np.einsum("qla,l->aq", T_coord, x_dof_vector)
+        u_exact_K = u_exact(x_global)
         T = element.tabulate(zeta)
         error_K = u_exact_K - T @ u_numerical_K
-        J = jacobian(mesh, alpha, zeta)
-        error_nrm_2 += np.sum(w_q * error_K**2 * np.abs(np.linalg.det(J)))
+        jac = jacobian(mesh, alpha, zeta)
+        error_nrm_2 += np.sum(w_q * error_K**2 * np.abs(np.linalg.det(jac)))
     return np.sqrt(error_nrm_2)
