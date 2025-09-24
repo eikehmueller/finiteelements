@@ -409,4 +409,4 @@ def plot_solution(u_numerical, u_exact, element, filename):
         p = PatchCollection([mask], color="white", zorder=2)
         ax.add_collection(p)
         ax.tick_params(axis="both", which="major", labelsize=6)
-    plt.savefig(filename, bbox_inches="tight")
+    plt.savefig(filename, bbox_inches="tight", dpi=300)
