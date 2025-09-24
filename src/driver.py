@@ -29,7 +29,7 @@ def f(x, s):
 
 
 # Number of mesh refinements
-nref = 7
+nref = 5
 # Coeffcient of diffusion term
 kappa = 0.9
 # Coefficient of zero order term
@@ -83,6 +83,7 @@ with measure_time("solve linear system"):
         ksp.setOperators(stiffness_matrix)
         ksp.setFromOptions()
         ksp.solve(b_petsc, u_petsc)
+        niter = ksp.getIterationNumber()
     else:
         u_h.data[:] = np.linalg.solve(stiffness_matrix, b_h.data)
 
@@ -107,6 +108,12 @@ else:
     u_exact.data[:] = np.linalg.solve(mass_matrix, b_h.data)
 
 error_norm = error_nrm(u_h, functools.partial(f, s=s), quad)
+
+if sparse_matrices:
+    print()
+    n_nz = int(stiffness_matrix.getInfo()["nz_used"])
+    print(f"number of non-zero matrix entries = {n_nz}")
+    print(f"number of solver iterations = {niter}")
 
 print()
 print(f"error = {error_norm}")
