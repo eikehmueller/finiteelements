@@ -1,11 +1,15 @@
 import pytest
 import numpy as np
-from fem.polynomialelement import PolynomialElement
 from fem.vectorelement import VectorElement
+from fixtures import element
 
 
+@pytest.fixture
 def nodal_points(degree):
-    """Return locations of nodal points on reference triaggle"""
+    """Return locations of nodal points on reference triangle
+
+    :arg degree: polynomial degree
+    """
     xi = []
     h = 1 / degree
     for b in range(degree + 1):
@@ -28,10 +32,9 @@ def nodal_points(degree):
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
-def test_tabulation(degree):
-    element = PolynomialElement(degree)
+def test_tabulation(degree, element, nodal_points):
     vectorelement = VectorElement(element)
-    xi = nodal_points(degree)
+    xi = nodal_points
     tabulation = np.empty((element.ndof, vectorelement.ndof, 2))
     expected_tabulation = np.zeros((element.ndof, vectorelement.ndof, 2))
     for j in range(element.ndof):
@@ -41,10 +44,9 @@ def test_tabulation(degree):
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
-def test_dof_tabulation(degree):
-    element = PolynomialElement(degree)
+def test_dof_tabulation(degree, element, nodal_points):
     vectorelement = VectorElement(element)
-    xi = nodal_points(degree)
+    xi = nodal_points
     fhat = lambda x: np.asarray(
         [np.exp(x[..., 0]) * (1 + x[..., 1]), x[..., 0] + np.exp(2 * x[..., 1])]
     )

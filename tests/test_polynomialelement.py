@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 from fem.linearelement import LinearElement
-from fem.polynomialelement import PolynomialElement
+from fixtures import element, polynomial_element
 
 
 @pytest.fixture
@@ -36,9 +36,8 @@ def nodal_points(degree):
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
-def test_nodal_tabulation(degree):
+def test_nodal_tabulation(degree, element):
     """Check that phi_k(xi_j) = delta_{j,k} for all basis functions"""
-    element = PolynomialElement(degree)
     xi = nodal_points(degree)
     evaluations = np.empty((element.ndof, element.ndof))
     for j in range(element.ndof):
@@ -47,17 +46,15 @@ def test_nodal_tabulation(degree):
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
-def test_nodal_tabulation_vectorised(degree):
+def test_nodal_tabulation_vectorised(degree, element):
     """Check that phi_k(xi_j) = delta_{j,k} for all basis functions"""
-    element = PolynomialElement(degree)
     xi = nodal_points(degree)
     assert np.allclose(element.tabulate(xi), np.eye(element.ndof))
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
-def test_dof_tabulation(degree):
+def test_dof_tabulation(degree, element):
     """Check that dof-evaluation works as expected"""
-    element = PolynomialElement(degree)
     # function to test
     fhat = lambda x: np.exp(0.5 + x[..., 0] + 2 * x[..., 1])
     xi = nodal_points(degree)
@@ -68,7 +65,7 @@ def test_agrees_with_linear(rng):
     """Check that tabulation of polynomial basis functions of degree 1 give same
     result as for linear basis functions"""
     element_lin = LinearElement()
-    element_poly = PolynomialElement(1)
+    element_poly = polynomial_element(1)
     nsamples = 32
     xi = rng.uniform(size=(nsamples, 2))
     for j in range(nsamples):
@@ -81,7 +78,7 @@ def test_agrees_with_linear_vectorised(rng):
     """Check that tabulation of polynomial basis functions of degree 1 give same
     result as for linear basis functions"""
     element_lin = LinearElement()
-    element_poly = PolynomialElement(1)
+    element_poly = polynomial_element(1)
     nsamples = 32
     xi = rng.uniform(size=(nsamples, 2))
     assert np.allclose(element_lin.tabulate(xi), element_poly.tabulate(xi))
@@ -91,7 +88,7 @@ def test_agrees_with_linear_gradient(rng):
     """Check that gradient tabulation of polynomial basis functions of degree 1 give same
     result as for linear basis functions"""
     element_lin = LinearElement()
-    element_poly = PolynomialElement(1)
+    element_poly = polynomial_element(1)
     nsamples = 32
     xi = rng.uniform(size=(nsamples, 2))
     for j in range(nsamples):
@@ -105,7 +102,7 @@ def test_agrees_with_linear_gradient_vectorised(rng):
     """Check that gradient tabulation of polynomial basis functions of degree 1 give same
     result as for linear basis functions"""
     element_lin = LinearElement()
-    element_poly = PolynomialElement(1)
+    element_poly = polynomial_element(1)
     nsamples = 32
     xi = rng.uniform(size=(nsamples, 2))
     assert np.allclose(
@@ -115,9 +112,8 @@ def test_agrees_with_linear_gradient_vectorised(rng):
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
-def test_dofmap(degree):
+def test_dofmap(degree, element):
     """Check that dof-map works as expected"""
-    element = PolynomialElement(degree)
     indices = [
         element.dofmap(*element.inverse_dofmap(ell)) for ell in range(element.ndof)
     ]

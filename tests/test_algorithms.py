@@ -1,6 +1,7 @@
 """Main program"""
 
 import numpy as np
+import pytest
 
 import petsc4py
 
@@ -8,11 +9,11 @@ petsc4py.init("-ksp_type preonly -pc_type lu")
 from petsc4py import PETSc
 
 from fem.utilitymeshes import RectangleMesh
-from fem.polynomialelement import PolynomialElement
 from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
 from fem.algorithms import assemble_rhs, assemble_lhs, assemble_lhs_sparse, error_nrm
 from fem.quadrature import GaussLegendreQuadratureReferenceTriangle
+from fixtures import element
 
 
 def f(x):
@@ -20,17 +21,15 @@ def f(x):
     return np.cos(2 * np.pi * x[0]) * np.cos(4 * np.pi * x[1])
 
 
-def test_solve():
+@pytest.mark.parametrize("degree", [1, 2, 3])
+def test_solve(degree, element):
     """Check that dense matrix assembly and solve works"""
     # Polynomial degree
-    degree = 3
     nref = 4
     # Coeffcient of diffusion term
     kappa = 0.9
     # Coefficient of zero order term
     omega = 0.4
-
-    element = PolynomialElement(degree)
 
     mesh = RectangleMesh(Lx=1, Ly=1, nref=nref)
     fs = FunctionSpace(mesh, element)
@@ -48,21 +47,19 @@ def test_solve():
 
     error_norm = error_nrm(u_numerical, f, quad)
 
-    tolerance = 1.1e-4
-    assert error_norm < tolerance
+    tolerance = {1: 5e-2, 2: 2e-3, 3: 1.1e-4}
+    assert error_norm < tolerance[degree]
 
 
-def test_solve_sparse():
+@pytest.mark.parametrize("degree", [1, 2, 3])
+def test_solve_sparse(degree, element):
     """Check that sparse matrix assembly and solve works"""
     # Polynomial degree
-    degree = 3
     nref = 5
     # Coeffcient of diffusion term
     kappa = 0.9
     # Coefficient of zero order term
     omega = 0.4
-
-    element = PolynomialElement(degree)
 
     mesh = RectangleMesh(Lx=1, Ly=1, nref=nref)
     fs = FunctionSpace(mesh, element)
@@ -86,5 +83,5 @@ def test_solve_sparse():
 
     error_norm = error_nrm(u_numerical, f, quad)
 
-    tolerance = 1.0e-4
-    assert error_norm < tolerance
+    tolerance = {1: 1.5e-2, 2: 3.0e-4, 3: 1.1e-4}
+    assert error_norm < tolerance[degree]
