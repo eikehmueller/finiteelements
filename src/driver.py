@@ -12,7 +12,6 @@ from petsc4py import PETSc
 
 from fem.utilitymeshes import RectangleMesh
 from fem.linearelement import LinearElement
-from fem.polynomialelement import PolynomialElement
 from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
 from fem.utilities import measure_time, grid_function
@@ -44,7 +43,12 @@ degree = 3
 if degree == 1:
     element = LinearElement()
 else:
-    element = PolynomialElement(degree)
+    try:
+        from fem.polynomialelement import PolynomialElement
+
+        element = PolynomialElement(degree)
+    except:
+        pass
 
 # Mesh
 mesh = RectangleMesh(Lx=1.0, Ly=1.0, nref=nref)

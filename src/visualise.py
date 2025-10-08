@@ -3,7 +3,6 @@
 import numpy as np
 
 from fem.utilitymeshes import RectangleMesh
-from fem.polynomialelement import PolynomialElement
 
 from fem.utilities import (
     visualise_mesh,
@@ -45,8 +44,13 @@ print()
 
 visualise_mesh(mesh, "mesh.svg")
 
-element = PolynomialElement(2)
-visualise_element(element, "element.png")
+try:
+    from fem.polynomialelement import PolynomialElement
+
+    element = PolynomialElement(2)
+    visualise_element(element, "element.png")
+except:
+    pass
 
 quad = GaussLegendreQuadratureReferenceTriangle(3)
 visualise_quadrature(quad, "quadrature.pdf")

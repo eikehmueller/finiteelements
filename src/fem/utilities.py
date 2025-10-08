@@ -8,9 +8,7 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
-from fem.utilitymeshes import RectangleMesh
 from fem.linearelement import LinearElement
-from fem.polynomialelement import PolynomialElement
 
 __all__ = [
     "measure_time",
@@ -43,9 +41,15 @@ def save_to_vtk(u, filename):
     :arg filename: name of file to save to
     """
     element = u.functionspace.finiteelement
-    assert isinstance(element, LinearElement) or (
-        isinstance(element, PolynomialElement) and (element.degree == 1)
-    ), "Only linear finite elements can be saved in vtk format"
+
+    valid_element = isinstance(element, LinearElement)
+    try:
+        from fem.polynomialelement import PolynomialElement
+        valid_element = valid_element or (isinstance(element, PolynomialElement) and (element.degree == 1))
+    except:
+        pass
+
+    assert  valid_element, "Only linear finite elements can be saved in vtk format"
     mesh = u.functionspace.mesh
     assert u.ndof == mesh.nvertices
     with open(filename, "w", encoding="utf8") as f:
