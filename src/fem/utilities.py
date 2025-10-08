@@ -280,7 +280,7 @@ def visualise_element(element, filename):
         ax.set_xlim(-0.1, 1.1)
         ax.set_ylim(-0.1, 1.1)
         ax.set_title(j)
-        ax.contourf(X, Y, Z[..., j], levels=100, vmin=0, vmax=1)
+        ax.contourf(X, Y, Z[..., j], levels=100, vmin=0, vmax=1,cmap="terrain")
         ax.quiver(X_c, Y_c, gradZ[..., j, 0], gradZ[..., j, 1], color="red")
         sigma = 2
         mask = Polygon(
