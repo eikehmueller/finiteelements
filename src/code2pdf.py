@@ -14,6 +14,9 @@ if __name__ == "__main__":
         "--path", type=str, action="store", help="Path to use", default="."
     )
     parser.add_argument(
+        "--output", type=str, action="store", help="Name of output file", default="code"
+    )
+    parser.add_argument(
         "--recursive",
         action="store_true",
         help="Recurse into subdirectories?",
@@ -56,4 +59,4 @@ if __name__ == "__main__":
         nbformat.from_dict(data), resources={"metadata": {"name": "Source code"}}
     )
     writer = FilesWriter()
-    writer.write(body, resources, notebook_name="output")
+    writer.write(body, resources, notebook_name=args.output)

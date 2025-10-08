@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 
+from fem.utilitymeshes import RectangleMesh
 from fem.linearelement import LinearElement
 from fem.polynomialelement import PolynomialElement
 
@@ -410,3 +411,99 @@ def plot_solution(u_numerical, u_exact, element, filename):
         ax.add_collection(p)
         ax.tick_params(axis="both", which="major", labelsize=6)
     plt.savefig(filename, bbox_inches="tight", dpi=300)
+
+
+def grid_function(u, nx=256, ny=256):
+    """Convert function to plottable arrays
+
+    The smallest rectangle that covers the domain is sub-divided into a grid with nx cells in
+    the horizontal (x-) direction and ny cells in the vertical (y-) direction. The function
+    u(x) is evaluated at all (nx+1)*(ny+1) vertices of the resulting grid.
+
+    Three arrays of shape (nx+1,ny+1) are returned:
+        * X: the x-coordinates of all vertices of the grid
+        * Y: the y-coordinates of all vertices of the grid
+        * Z: the value of the function at all vertices of the grid
+
+    It is implicitly assumed that the coordinates of the mesh are represented by piecewise
+    linear functions. The code will still work if this is not the case, but the grid might be
+    distorted.
+
+    :arg u: function to grid
+    :arg nx: number of grid-cells in the horizontal (x-) direction
+    :arg ny: number of grid-cells in the vertical (y-) direction
+    """
+    # Number of cells used for discretisation
+    n = np.asarray([nx, ny])
+    mesh = u.functionspace.mesh
+    if not (
+        type(mesh.coordinates.functionspace.finiteelement.scalarfiniteelement)
+        is LinearElement
+    ):
+        print("WARNING: Plot might be distorted")
+
+    fs_coord = mesh.coordinates.functionspace
+    element_coord = fs_coord.finiteelement
+    zeta = np.asarray([[0, 0], [1, 0], [0, 1]])
+    coord_table = np.transpose(element_coord.tabulate(zeta), (0, 2, 1))
+    # Loop over all cells of mesh and find largest and smallest coordinates
+    p_max = np.asarray([[-np.inf, -np.inf]])
+    p_min = np.asarray([[np.inf, np.inf]])
+    for alpha in range(mesh.ncells):
+        # local dof-indices of coordinate field
+        ell_coord = range(element_coord.ndof)
+        # global dof-indices of coordinate field
+        ell_g_coord = fs_coord.local2global(alpha, ell_coord)
+        # coordinates
+        x_dof_vector = mesh.coordinates.data[ell_g_coord]
+        vertex_coordinates = coord_table @ x_dof_vector
+        p_max = np.max(
+            np.concatenate((vertex_coordinates, p_max)), axis=0, keepdims=True
+        )
+        p_min = np.min(
+            np.concatenate((vertex_coordinates, p_min)), axis=0, keepdims=True
+        )
+    # Convert coordinates to array of shape (n,2)
+    offset = p_min.flatten()
+    h = (p_max.flatten() - offset) / n
+
+    XY = [
+        np.arange(offset[j], offset[j] + (n[j] + 1 / 2) * h[j], h[j]) for j in range(2)
+    ]
+    mg = np.asarray(np.meshgrid(*XY)).T
+    fs = u.functionspace
+    element = fs.finiteelement
+    Z = np.zeros(mg.shape[:-1])
+    indices = np.asarray(
+        np.meshgrid(*[np.arange(0, n[j] + 1) for j in range(2)]), dtype=int
+    ).T
+    for alpha in range(mesh.ncells):
+        # local dof-indices of coordinate field
+        ell_coord = range(element_coord.ndof)
+        # global dof-indices of coordinate field
+        ell_g_coord = fs_coord.local2global(alpha, ell_coord)
+        # coordinates
+        x_dof_vector = mesh.coordinates.data[ell_g_coord]
+        vertex_coordinates = coord_table @ x_dof_vector
+        A_inv = np.linalg.inv(
+            np.asarray(
+                [
+                    vertex_coordinates[1, :] - vertex_coordinates[0, :],
+                    vertex_coordinates[2, :] - vertex_coordinates[0, :],
+                ]
+            )
+        )
+        # local coordinates
+        w = (mg - vertex_coordinates[0, :]) @ A_inv
+        filter = np.logical_and(
+            np.logical_and(w[..., 0] >= 0, w[..., 1] >= 0), w[..., 0] + w[..., 1] <= 1
+        )
+        # local dof-indices of dof-vector
+        ell = range(element.ndof)
+        ell_g = fs.local2global(alpha, ell)
+        dof_vector = u.data[ell_g]
+        zeta = w[filter]
+        values = element.tabulate(zeta) @ dof_vector
+        # Set values
+        Z[*indices[filter].T] = values
+    return mg[..., 0], mg[..., 1], Z

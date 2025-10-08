@@ -44,22 +44,22 @@ class VectorElement(FiniteElement):
         :arg finitelement: underlying finite element
         """
         super().__init__()
-        self._finiteelement = finiteelement
+        self.scalarfiniteelement = finiteelement
 
     @property
     def ndof_per_interior(self):
         """Return number of unknowns associated with the interior of the cell"""
-        return 2 * self._finiteelement.ndof_per_interior
+        return 2 * self.scalarfiniteelement.ndof_per_interior
 
     @property
     def ndof_per_facet(self):
         """Return number of unknowns associated with each facet"""
-        return 2 * self._finiteelement.ndof_per_facet
+        return 2 * self.scalarfiniteelement.ndof_per_facet
 
     @property
     def ndof_per_vertex(self):
         """Return number of unknowns associated with each vertex"""
-        return 2 * self._finiteelement.ndof_per_vertex
+        return 2 * self.scalarfiniteelement.ndof_per_vertex
 
     def tabulate_dofs(self, fhat):
         """Tabulate all dofs on a given function on the reference element
@@ -68,7 +68,7 @@ class VectorElement(FiniteElement):
         """
         dof_vector = np.empty(self.ndof)
         for dim in (0, 1):
-            dof_vector[dim::2] = self._finiteelement.tabulate_dofs(
+            dof_vector[dim::2] = self.scalarfiniteelement.tabulate_dofs(
                 lambda xhat, d=dim: fhat(xhat)[d]
             )
         return dof_vector
@@ -81,7 +81,7 @@ class VectorElement(FiniteElement):
         :arg zeta: two-dimensional point zeta at which the basis functions are to
                 be evaluated.
         """
-        scalar_tabulation = self._finiteelement.tabulate(zeta)
+        scalar_tabulation = self.scalarfiniteelement.tabulate(zeta)
         value = (
             np.zeros((self.ndof, 2))
             if zeta.ndim == 1
@@ -100,7 +100,7 @@ class VectorElement(FiniteElement):
         :arg zeta: two-dimensional point xi at which the gradients of the basis
                 functions are to be evaluated.
         """
-        scalar_grad = self._finiteelement.tabulate_gradient(zeta)
+        scalar_grad = self.scalarfiniteelement.tabulate_gradient(zeta)
         grad = (
             np.zeros((self.ndof, 2, 2))
             if zeta.ndim == 1

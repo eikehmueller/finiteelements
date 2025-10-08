@@ -1,6 +1,7 @@
 """Solve finite element model proble,m"""
 
 import numpy as np
+from matplotlib import pyplot as plt
 import functools
 import sys
 
@@ -14,7 +15,7 @@ from fem.linearelement import LinearElement
 from fem.polynomialelement import PolynomialElement
 from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
-from fem.utilities import save_to_vtk, measure_time
+from fem.utilities import measure_time, grid_function
 from fem.algorithms import assemble_rhs, assemble_lhs, assemble_lhs_sparse, error_nrm
 from fem.quadrature import GaussLegendreQuadratureReferenceTriangle
 
@@ -29,7 +30,7 @@ def f(x, s):
 
 
 # Number of mesh refinements
-nref = 5
+nref = 4
 # Coeffcient of diffusion term
 kappa = 0.9
 # Coefficient of zero order term
@@ -37,15 +38,16 @@ omega = 0.4
 # Wave vector
 s = [2, 4]
 # Polynomial degree of the finite element
-degree = 1
+degree = 3
 
 # Finite element
 if degree == 1:
     element = LinearElement()
 else:
     element = PolynomialElement(degree)
+
 # Mesh
-mesh = RectangleMesh(Lx=1, Ly=1, nref=nref)
+mesh = RectangleMesh(Lx=1.0, Ly=1.0, nref=nref)
 # Function space
 fs = FunctionSpace(mesh, element)
 # Quadrature rule
@@ -87,26 +89,6 @@ with measure_time("solve linear system"):
     else:
         u_h.data[:] = np.linalg.solve(stiffness_matrix, b_h.data)
 
-u_exact = Function(fs, "u_exact")
-
-b_h = CoFunction(fs)
-assemble_rhs(functools.partial(f, s=s), b_h, quad)
-
-# Solve linear system M^{(h)} u_{exact} = b^{(h)}
-if sparse_matrices:
-    mass_matrix = assemble_lhs_sparse(fs, quad, 0, 1)
-    u_petsc = PETSc.Vec().createWithArray(u_exact.data)
-    b_petsc = PETSc.Vec().createWithArray(b_h.data)
-    ksp = PETSc.KSP().create()
-    ksp.setOperators(mass_matrix)
-    ksp.setType("cg")
-    ksp.getPC().setType("jacobi")
-    ksp.setTolerances(rtol=1e-12)
-    ksp.solve(b_petsc, u_petsc)
-else:
-    mass_matrix = assemble_lhs(fs, quad, 0, 1)
-    u_exact.data[:] = np.linalg.solve(mass_matrix, b_h.data)
-
 error_norm = error_nrm(u_h, functools.partial(f, s=s), quad)
 
 if sparse_matrices:
@@ -116,14 +98,24 @@ if sparse_matrices:
     print(f"number of solver iterations = {niter}")
 
 print()
-print(f"error = {error_norm}")
+print(f"error norm = {error_norm}")
 
-# Compute error
-error = Function(fs, "error")
-error.data[:] = u_h.data[:] - u_exact.data[:]
+# Plot results
+X, Y, Z = grid_function(u_h, nx=256, ny=256)
+# Exact solution
+Z_exact = np.cos(np.pi * s[0] * X) * np.cos(np.pi * s[1] * Y)
 
-# Save solution and error to .vtk file
-if element is LinearElement:
-    save_to_vtk(u_exact, "u_exact.vtk")
-    save_to_vtk(u_h, "u_numerical.vtk")
-    save_to_vtk(error, "error.vtk")
+plt.clf()
+fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(12, 8))
+for ax in axs:
+    ax.set_aspect("equal")
+axs[0].set_title(r"numerical $u^{(h)}(x)$")
+cs = axs[0].contourf(X, Y, Z, levels=10, vmin=-1.2, vmax=1.2)
+cbar = plt.colorbar(cs, shrink=1, location="bottom", extend="both")
+axs[1].set_title(r"difference $u^{(h)}(x)-u_{\text{exact}}(x)$")
+cs = axs[1].contourf(X, Y, Z - Z_exact, levels=10, cmap="plasma")
+cbar = plt.colorbar(cs, shrink=1, location="bottom", extend="both")
+axs[2].set_title(r"exact $u_{\text{exact}}(x)$")
+cs = axs[2].contourf(X, Y, Z_exact, levels=10, vmin=-1.2, vmax=1.2)
+cbar = plt.colorbar(cs, shrink=1, location="bottom", extend="both")
+plt.savefig("solution.png", bbox_inches="tight", dpi=300)
