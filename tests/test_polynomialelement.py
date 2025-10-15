@@ -56,9 +56,9 @@ def test_nodal_tabulation_vectorised(degree, element):
 def test_dof_tabulation(degree, element):
     """Check that dof-evaluation works as expected"""
     # function to test
-    fhat = lambda x: np.exp(0.5 + x[..., 0] + 2 * x[..., 1])
+    fhat = lambda x: np.exp(0.5 + x[0] + 2 * x[1])
     xi = nodal_points(degree)
-    assert np.allclose(fhat(xi), element.tabulate_dofs(fhat))
+    assert np.allclose(fhat(xi.T), element.tabulate_dofs(fhat))
 
 
 def test_agrees_with_linear(rng):

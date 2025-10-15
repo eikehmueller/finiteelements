@@ -130,7 +130,7 @@ class PolynomialElement(FiniteElement):
 
         :arg fhat: function fhat defined for 2d vectors
         """
-        return fhat(self._nodal_points)
+        return fhat(self._nodal_points.T)
 
     def tabulate(self, zeta):
         """Evaluate all basis functions at a point inside the reference cell

@@ -10,12 +10,7 @@ from matplotlib.collections import PatchCollection
 
 from fem.linearelement import LinearElement
 
-__all__ = [
-    "measure_time",
-    "save_to_vtk",
-    "plot_solution",
-    "grid_function"
-]
+__all__ = ["measure_time", "save_to_vtk", "plot_solution", "grid_function"]
 
 
 @contextmanager
@@ -44,11 +39,14 @@ def save_to_vtk(u, filename):
     valid_element = isinstance(element, LinearElement)
     try:
         from fem.polynomialelement import PolynomialElement
-        valid_element = valid_element or (isinstance(element, PolynomialElement) and (element.degree == 1))
+
+        valid_element = valid_element or (
+            isinstance(element, PolynomialElement) and (element.degree == 1)
+        )
     except:
         pass
 
-    assert  valid_element, "Only linear finite elements can be saved in vtk format"
+    assert valid_element, "Only linear finite elements can be saved in vtk format"
     mesh = u.functionspace.mesh
     assert u.ndof == mesh.nvertices
     with open(filename, "w", encoding="utf8") as f:
@@ -80,6 +78,7 @@ def save_to_vtk(u, filename):
         for j in range(u.ndof):
             print(u.data[j], file=f)
 
+
 def plot_solution(u_numerical, u_exact, element, filename):
     """Plot numerical solution, exact solution and error
 
@@ -97,7 +96,7 @@ def plot_solution(u_numerical, u_exact, element, filename):
     XY = np.asarray([X, Y]).T.reshape([X.shape[0] * X.shape[1], 2])
 
     T = element.tabulate(XY)
-    Z_exact = u_exact(XY).reshape([X.shape[0], X.shape[1]]).T
+    Z_exact = u_exact(XY.T).reshape([X.shape[0], X.shape[1]]).T
     Z_exact[0, -1] = 0
     Z_exact[0, -2] = 1
     Z_numerical = np.dot(T, u_numerical).reshape([X.shape[0], X.shape[1]]).T
