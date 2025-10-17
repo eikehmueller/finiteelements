@@ -76,7 +76,9 @@ class VectorElement(FiniteElement):
     def tabulate(self, zeta):
         """Tabulate all basis functions at a point inside the reference cell
 
-        Returns a vector of length ndof with the evaluation of all basis functions.
+        Returns an array of shape (ndof,2) with the evaluation of all basis functions.
+        If zeta has shape (n,2), i.e. it is a collection of points, this method returns
+        a rank 3 tensor of shape (n,ndof,2) with the evaluation at all n points.
 
         :arg zeta: two-dimensional point zeta at which the basis functions are to
                 be evaluated.
