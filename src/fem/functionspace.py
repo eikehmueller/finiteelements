@@ -1,6 +1,7 @@
 """Function space"""
 
 from collections.abc import Iterable
+from fem.vectorelement import VectorElement
 
 
 class FunctionSpace:
@@ -50,6 +51,7 @@ class FunctionSpace:
         """
         self.mesh = mesh
         self.finiteelement = finiteelement
+        self.n_components = 2 if type(self.finiteelement) is VectorElement else 1
 
     @property
     def ndof(self):
@@ -90,11 +92,24 @@ class FunctionSpace:
             # dof is associated with facet
             beta = self.mesh.cell2facet[alpha][rho]
             # check whether facet is oriented in the same direction as the local facet
-            aligned_orientation = (
-                self.mesh.facet2vertex[beta][0]
-                == self.mesh.cell2vertex[alpha][(rho + 1) % 3]
+
+            _j = (
+                (
+                    self.n_components
+                    * (
+                        self.finiteelement.ndof_per_facet // self.n_components
+                        - j // self.n_components
+                        - 1
+                    )
+                    + j % self.n_components
+                )
+                if (
+                    self.mesh.facet2vertex[beta][0]
+                    == self.mesh.cell2vertex[alpha][(rho + 1) % 3]
+                )
+                else j
             )
-            _j = j if aligned_orientation else self.finiteelement.ndof_per_facet - j - 1
+
             return (
                 self.mesh.nvertices * self.finiteelement.ndof_per_vertex
                 + beta * self.finiteelement.ndof_per_facet
