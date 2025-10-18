@@ -94,7 +94,12 @@ class FunctionSpace:
             # check whether facet is oriented in the same direction as the local facet
 
             _j = (
-                (
+                j
+                if (
+                    self.mesh.facet2vertex[beta][0]
+                    == self.mesh.cell2vertex[alpha][(rho + 1) % 3]
+                )
+                else (
                     self.n_components
                     * (
                         self.finiteelement.ndof_per_facet // self.n_components
@@ -103,11 +108,6 @@ class FunctionSpace:
                     )
                     + j % self.n_components
                 )
-                if (
-                    self.mesh.facet2vertex[beta][0]
-                    == self.mesh.cell2vertex[alpha][(rho + 1) % 3]
-                )
-                else j
             )
 
             return (
