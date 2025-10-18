@@ -1,6 +1,5 @@
 import numpy as np
 from petsc4py import PETSc
-from fem.auxilliary import jacobian
 
 __all__ = [
     "assemble_rhs",
@@ -36,7 +35,8 @@ def assemble_rhs(f, r, quad):
         w_q = quad.weights
         f_X = f(np.dot(x_dof_vector, element_coord.tabulate(zeta)).T)
         T = element.tabulate(zeta)
-        J = jacobian(mesh, alpha, zeta)
+        T_coord_partial = element_coord.tabulate_gradient(zeta)
+        J = np.einsum("l,qlab->qab", x_dof_vector, T_coord_partial)
         r.data[ell_g] += np.einsum("q,qi,q,q->i", w_q, T, f_X, np.abs(np.linalg.det(J)))
 
 
@@ -72,15 +72,21 @@ def assemble_lhs(fs, quad, kappa, omega):
     mesh = fs.mesh
     element = fs.finiteelement
     stiffness_matrix = np.zeros((fs.ndof, fs.ndof))
+    fs_coord = mesh.coordinates.functionspace
+    element_coord = fs_coord.finiteelement
     for alpha in range(mesh.ncells):
         # global indices of function space
         ell = range(element.ndof)
         ell_g = fs.local2global(alpha, ell)
+        ell_coord = range(element_coord.ndof)
+        ell_g_coord = fs_coord.local2global(alpha, ell_coord)
         zeta = np.asarray(quad.nodes)
         w_q = quad.weights
         T_grad = element.tabulate_gradient(zeta)
         T = element.tabulate(zeta)
-        J = jacobian(mesh, alpha, zeta)
+        x_dof_vector = mesh.coordinates.data[ell_g_coord]
+        T_coord_partial = element_coord.tabulate_gradient(zeta)
+        J = np.einsum("l,qlab->qab", x_dof_vector, T_coord_partial)
         JT_J_inv = np.linalg.inv(np.einsum("qji,qjk->qik", J, J))
         local_matrix = kappa * np.einsum(
             "q,qjl,qlm,qkm,q->jk",
@@ -113,16 +119,22 @@ def assemble_lhs_sparse(fs, quad, kappa, omega):
     row_start, col_indices = sparsity_lhs(fs)
     stiffness_matrix = PETSc.Mat()
     stiffness_matrix.createAIJ((fs.ndof, fs.ndof), csr=(row_start, col_indices))
+    fs_coord = mesh.coordinates.functionspace
+    element_coord = fs_coord.finiteelement
     for alpha in range(mesh.ncells):
         # local dof-indices of function space
         ell = range(element.ndof)
         # global dof-indices of function space
         ell_g = fs.local2global(alpha, ell)
+        ell_coord = range(element_coord.ndof)
+        ell_g_coord = fs_coord.local2global(alpha, ell_coord)
         zeta = np.asarray(quad.nodes)
         w_q = quad.weights
         T_grad = element.tabulate_gradient(zeta)
         T = element.tabulate(zeta)
-        J = jacobian(mesh, alpha, zeta)
+        x_dof_vector = mesh.coordinates.data[ell_g_coord]
+        T_coord_partial = element_coord.tabulate_gradient(zeta)
+        J = np.einsum("l,qlab->qab", x_dof_vector, T_coord_partial)
         JT_J_inv = np.linalg.inv(np.einsum("qji,qjk->qik", J, J))
         local_matrix = kappa * np.einsum(
             "q,qjl,qlm,qkm,q->jk",
@@ -170,10 +182,11 @@ def error_nrm(u_numerical, u_exact, quad):
         zeta = np.asarray(quad.nodes)
         w_q = quad.weights
         T_coord = element_coord.tabulate(zeta)
+        T_coord_partial = element_coord.tabulate_gradient(zeta)
         x_global = np.einsum("qla,l->aq", T_coord, x_dof_vector)
         u_exact_K = u_exact(x_global)
         T = element.tabulate(zeta)
         error_K = u_exact_K - T @ u_numerical_K
-        jac = jacobian(mesh, alpha, zeta)
+        jac = np.einsum("l,qlab->qab", x_dof_vector, T_coord_partial)
         error_nrm_2 += np.sum(w_q * error_K**2 * np.abs(np.linalg.det(jac)))
     return np.sqrt(error_nrm_2)
