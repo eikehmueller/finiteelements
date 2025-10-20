@@ -40,12 +40,14 @@ def error_norm(u_numerical, u_exact, quad):
         T_coord = element_coord.tabulate(zeta_q)
         T_coord_grad = element_coord.tabulate_gradient(zeta_q)
         # Physical coordinates at quadrature point
-        x_q = np.einsum("qla,l->aq", T_coord, x_dof_vector)
+        x_q = np.einsum("qla,l->qa", T_coord, x_dof_vector)
         # Evaluation of exact solution at quadrature points
-        u_exact_q = u_exact(x_q)
+        u_exact_q = u_exact(x_q.T)
         # Error at quadrature points
         error_q = u_exact_q - T @ u_numerical_dof_vector
-        jac = np.einsum("l,qlab->qab", x_dof_vector, T_coord_grad)
+        # Jacobian and its determinant
+        J = np.einsum("l,qlab->qab", x_dof_vector, T_coord_grad)
+        det_J = np.abs(np.linalg.det(J))
         # Increment square of error
-        error_nrm_2 += np.sum(w_q * error_q**2 * np.abs(np.linalg.det(jac)))
+        error_nrm_2 += np.sum(w_q * error_q**2 * det_J)
     return np.sqrt(error_nrm_2)
