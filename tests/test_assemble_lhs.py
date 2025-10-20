@@ -5,7 +5,7 @@ import pytest
 from fem.utilitymeshes import RectangleMesh, TriangleMesh
 from fem.functionspace import FunctionSpace
 from fem.quadrature import GaussLegendreQuadratureReferenceTriangle
-from fem.algorithms import assemble_lhs, assemble_lhs_sparse
+from fem.assembly import assemble_lhs, assemble_lhs_sparse
 from fixtures import element
 
 

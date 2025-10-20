@@ -15,7 +15,8 @@ from fem.linearelement import LinearElement
 from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
 from fem.utilities import measure_time, grid_function
-from fem.algorithms import assemble_rhs, assemble_lhs, assemble_lhs_sparse, error_nrm
+from fem.assembly import assemble_rhs, assemble_lhs, assemble_lhs_sparse
+from fem.error import error_norm
 from fem.quadrature import GaussLegendreQuadratureReferenceTriangle
 
 
@@ -93,7 +94,7 @@ with measure_time("solve linear system"):
     else:
         u_h.data[:] = np.linalg.solve(stiffness_matrix, b_h.data)
 
-error_norm = error_nrm(u_h, functools.partial(f, s=s), quad)
+error_nrm = error_norm(u_h, functools.partial(f, s=s), quad)
 
 if sparse_matrices:
     print()
@@ -102,7 +103,7 @@ if sparse_matrices:
     print(f"number of solver iterations = {niter}")
 
 print()
-print(f"error norm = {error_norm}")
+print(f"error norm = {error_nrm}")
 
 # Plot results
 X, Y, Z = grid_function(u_h, nx=256, ny=256)

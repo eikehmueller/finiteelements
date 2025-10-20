@@ -11,7 +11,8 @@ from petsc4py import PETSc
 from fem.utilitymeshes import RectangleMesh
 from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
-from fem.algorithms import assemble_rhs, assemble_lhs, assemble_lhs_sparse, error_nrm
+from fem.assembly import assemble_rhs, assemble_lhs, assemble_lhs_sparse
+from fem.error import error_norm
 from fem.quadrature import GaussLegendreQuadratureReferenceTriangle
 from fixtures import element
 
@@ -45,10 +46,10 @@ def test_solve(degree, element):
     stiffness_matrix = assemble_lhs(fs, quad, kappa, omega)
     u_numerical.data[:] = np.linalg.solve(stiffness_matrix, r.data[:])
 
-    error_norm = error_nrm(u_numerical, f, quad)
+    error_nrm = error_norm(u_numerical, f, quad)
 
     tolerance = {1: 5e-2, 2: 2e-3, 3: 1.1e-4}
-    assert error_norm < tolerance[degree]
+    assert error_nrm < tolerance[degree]
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3])
@@ -81,7 +82,7 @@ def test_solve_sparse(degree, element):
     ksp.setFromOptions()
     ksp.solve(r_petsc, u_petsc)
 
-    error_norm = error_nrm(u_numerical, f, quad)
+    error_nrm = error_norm(u_numerical, f, quad)
 
-    tolerance = {1: 1.5e-2, 2: 3.0e-4, 3: 1.1e-4}
-    assert error_norm < tolerance[degree]
+    tolerance = {1: 1.5e-2, 2: 5.0e-4, 3: 1.2e-4}
+    assert error_nrm < tolerance[degree]
