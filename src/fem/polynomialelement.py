@@ -1,4 +1,4 @@
-"""Polynomial finite element"""
+"""Lagrange polynomial finite element"""
 
 from fem.finiteelement import FiniteElement
 import numpy as np
@@ -7,12 +7,14 @@ __all__ = ["PolynomialElement"]
 
 
 class PolynomialElement(FiniteElement):
-    """Nodal polynomial finite element basis functions of arbitrary degree p in two dimensions
+    """Nodal polynomial finite element basis functions of arbitrary degree p in
+    two dimensions
 
-    There are (p+1)*(p+2)/2 basis functions, which represent bi-variate polynomials P_p(x,y)
-    of degree p on the reference triangle. Each basis function is a linear combination of
-    monomials x^a*y^b with a+b <= p. The dofs are function evaluations are the nodal points
-    (j*h,k*h) where h=1/p, as shown in the following figure.
+    There are (p+1)*(p+2)/2 basis functions, which represent bi-variate
+    polynomials P_p(x,y) of degree p on the reference triangle. Each basis function
+    is a linear combination of monomials x^a*y^b with a+b <= p. The dofs are
+    function evaluations are the nodal points (j*h,k*h) where h=1/p, as shown in the
+    following figure.
 
     Arrangement of the 10 unknowns on reference triangle for p=3:
 
@@ -84,17 +86,18 @@ class PolynomialElement(FiniteElement):
 
         where the row i corresponds to the index of the point zeta_i = (x_i,y_i) and
         the column j to the power (a(j),b(j)) that the point zeta_i is raised to.
-        The resulting matrix has the shape (npoints, ndof) where npoints is the number of points
-        in zeta.
+        The resulting matrix has the shape (n, ndof) where npoints is the
+        number of points in zeta.
 
-        If grad=True, compute the gradient grad V(zeta) of the Vandermonde matrix with
+        If grad=True, compute the gradient grad V(zeta) of the Vandermonde matrix
+        with
 
             grad V_{i,j,k} = d V_{i,j}(zeta) / dx_k
 
-        The resulting tensor has the shape (npoints, ndof,2).
+        The resulting tensor has the shape (n, ndof,2).
 
-        :arg zeta: array of shape (npoints, 2) containing the points for which the Vandermonde matrix
-                 is to be calculated
+        :arg zeta: array of shape (n, 2) containing the points for which the
+                   Vandermonde matrix is to be calculated
         :arg grad: compute gradient?
         """
 
@@ -128,7 +131,11 @@ class PolynomialElement(FiniteElement):
     def tabulate_dofs(self, fhat):
         """Evaluate the dofs on a given function on the reference element
 
-        :arg fhat: function fhat defined for 2d vectors
+        Returns vector F with F_ell = lambda_ell(fhat) = fhat(xi_ell) where
+        lambda_ell is the ell-th degree of freedom and xi_ell is the corresponding
+        nodal point.
+
+        :arg fhat: function fhat to be tabulated
         """
         return fhat(self._nodal_points.T)
 
@@ -136,10 +143,10 @@ class PolynomialElement(FiniteElement):
         """Evaluate all basis functions at a point inside the reference cell
 
         Returns a vector of length ndof with the evaluation of all basis functions or a matrix
-        of shape (npoints,ndof) if zeta contains several points.
+        of shape (n,ndof) if zeta contains several points.
 
         :arg zeta: two-dimensional point zeta at which the basis functions are to
-                be evaluated; can also be a matrix of shape (npoints,2).
+                   be evaluated; can also be a matrix of shape (n,2).
         """
         _zeta = np.asarray(zeta)
         mat = np.squeeze(
@@ -151,14 +158,15 @@ class PolynomialElement(FiniteElement):
         return mat
 
     def tabulate_gradient(self, zeta):
-        """Evaluate the gradients of all basis functions at a point inside the reference cell
+        """Evaluate the gradients of all basis functions at a point inside the
+        reference cell
 
-        Returns an matrix of shape (ndof,2) with the evaluation of the gradients of all
-        basis functions. If zeta is a matrix containing several points then the matrix that is
-        returned is of shape (npoints,ndof,2)
+        Returns an matrix of shape (ndof,2) with the evaluation of the gradients of
+        all basis functions. If zeta is a matrix containing several points then the
+        matrix that is returned is of shape (n,ndof,2)
 
         :arg zeta: two-dimensional point zeta at which the gradients of the  basis
-                functions are to be evaluated; can also be a matrix of shape (npoints,2).
+                functions are to be evaluated; can also be a matrix of shape (n,2).
         """
         _zeta = np.asarray(zeta)
         mat = np.squeeze(

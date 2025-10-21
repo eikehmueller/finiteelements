@@ -41,7 +41,7 @@ class VectorElement(FiniteElement):
     def __init__(self, finiteelement):
         """Initialise new instance
 
-        :arg finitelement: underlying finite element
+        :arg finitelement: underlying scalar-valued finite element
         """
         super().__init__()
         self.scalarfiniteelement = finiteelement
@@ -64,7 +64,10 @@ class VectorElement(FiniteElement):
     def tabulate_dofs(self, fhat):
         """Tabulate all dofs on a given function on the reference element
 
-        :arg fhat: vector-valued function fhat(xhat) where xhat is a two-dimensional vector
+        Returns vector F with F_ell = lambda_ell(fhat) where
+        lambda_ell is the ell-th degree of freedom.
+
+        :arg fhat: function fhat to be tabulated
         """
         dof_vector = np.empty(self.ndof)
         for dim in (0, 1):

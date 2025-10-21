@@ -1,9 +1,8 @@
-"""Some utilities for visualisation etc."""
+"""Some utilities for visualisation and profiling"""
 
 from contextlib import contextmanager
 import time
 import numpy as np
-import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
@@ -80,7 +79,7 @@ def save_to_vtk(u, filename):
 
 
 def plot_solution(u_numerical, u_exact, element, filename):
-    """Plot numerical solution, exact solution and error
+    """Plot numerical solution, exact solution and error on reference triangle
 
     :arg u_numerical: numerical solution vector
     :arg u_exact: exact solution function
@@ -158,18 +157,18 @@ def plot_solution(u_numerical, u_exact, element, filename):
 def grid_function(u, nx=256, ny=256):
     """Convert function to plottable arrays
 
-    The smallest rectangle that covers the domain is sub-divided into a grid with nx cells in
-    the horizontal (x-) direction and ny cells in the vertical (y-) direction. The function
-    u(x) is evaluated at all (nx+1)*(ny+1) vertices of the resulting grid.
+    The smallest rectangle that covers the domain is sub-divided into a grid with nx
+    cells in the horizontal (x-) direction and ny cells in the vertical (y-) direction.
+    The function u(x) is evaluated at all (nx+1)*(ny+1) vertices of the resulting grid.
 
     Three arrays of shape (nx+1,ny+1) are returned:
         * X: the x-coordinates of all vertices of the grid
         * Y: the y-coordinates of all vertices of the grid
         * Z: the value of the function at all vertices of the grid
 
-    It is implicitly assumed that the coordinates of the mesh are represented by piecewise
-    linear functions. The code will still work if this is not the case, but the grid might be
-    distorted.
+    It is implicitly assumed that the coordinates of the mesh are represented by
+    piecewise linear functions. The code will still work if this is not the case, but
+    the grid might be distorted.
 
     :arg u: function to grid
     :arg nx: number of grid-cells in the horizontal (x-) direction

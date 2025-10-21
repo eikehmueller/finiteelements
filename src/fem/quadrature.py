@@ -11,7 +11,7 @@ __all__ = [
 
 
 class Quadrature(ABC):
-    """Base class for quadrature rule"""
+    """Abstract base class for quadrature rule"""
 
     @property
     @abstractmethod
@@ -31,7 +31,7 @@ class Quadrature(ABC):
 
 
 class GaussLegendreQuadratureLineSegment(Quadrature):
-    """Gauss-Legendre quadrature on a line segment"""
+    """Gauss-Legendre quadrature on a line segment (v_a,v_b)"""
 
     def __init__(self, v_a, v_b, npoints):
         """Initialise a new instance

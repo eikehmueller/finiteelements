@@ -1,4 +1,8 @@
-"""Base class for two-dimensional triangular meshes"""
+"""Class for representing two-dimensional triangular meshes
+
+The mesh consists of triangular cells and by default the coordinates are
+represented by piecewise linear functions
+"""
 
 from functools import cached_property
 import numpy as np
@@ -55,7 +59,7 @@ class Mesh:
 
     which is derived from cell2facet and facet2cell.
 
-    This class should not be instantiated since it does not contain any cells, use one of the meshes
+    This class should not be instantiated directly, use one of the factory methods
     in utilitymesh.py instead.
     """
 
@@ -119,9 +123,9 @@ class Mesh:
         self.coordinates = self._initialise_coordinates()
 
     def _refine(self):
-        """Refine the mesh by once subdividing each triangle
+        """Refine the mesh once by subdividing each triangle
 
-        Sub-divides each mesh cell into four smaller similar smaller triangles."""
+        Sub-divides each mesh cell into four smaller similar triangles."""
 
         # Pointer to current vertex
         vertex_idx = self.nvertices
@@ -161,7 +165,6 @@ class Mesh:
                     )
                 )
             # add interior cells
-
             coarse2finefacet[coarse_facets[rho]][0]
 
             # fine facets on boundary of coarse cell
