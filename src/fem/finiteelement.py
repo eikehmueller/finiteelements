@@ -7,7 +7,7 @@ __all__ = ["FiniteElement"]
 
 
 class FiniteElement(ABC):
-    """Abstract base class for 2d finite element basis functions on reference triangle
+    """Abstract base class for 2d finite element on reference triangle
 
     The vertices and facets and of the reference triangle are arranged
     as in the following diagram:
@@ -25,8 +25,8 @@ class FiniteElement(ABC):
          *-----------*
      v 0       F 2      v 1
 
-     Unknowns associated with vertices and facets are assumed to to be continuous and
-     arranged in a counter-clockwise order.
+     Unknowns associated with vertices and facets are arranged in a
+     counter-clockwise order.
     """
 
     def __init__(self):
@@ -34,34 +34,39 @@ class FiniteElement(ABC):
 
     @abstractmethod
     def tabulate(self, zeta):
-        """Evaluate all basis functions at a point inside the reference cell
+        """Evaluate all basis functions at one or several points
+        inside reference cell
 
         Returns a vector of length ndof with the evaluation of all basis functions or a matrix
-        of shape (npoints,ndof) if zeta contains several points.
+        of shape (n,ndof) if zeta contains several points.
 
         :arg zeta: two-dimensional point zeta at which the basis functions are to be
-                evaluated; can also be a matrix of shape (npoints,2) in which case the
-                evaluations at all points are returned.
+                evaluated; can also be a matrix of shape (n,2) in which case the
+                evaluations at all n points are returned.
         """
 
     @abstractmethod
     def tabulate_gradient(self, zeta):
-        """Evaluate the gradients of all basis functions at a point inside the reference cell
+        """Evaluate gradients of all basis functions at one or several points
+        inside the reference cell
 
         Returns an matrix of shape (ndof,2) with the evaluation of the gradients of all
         basis functions. If zeta is a matrix containing several points then the matrix that is
-        returned is of shape (npoints,ndof,2)
+        returned is of shape (n,ndof,2)
 
         :arg zeta: two dimensional point zeta at which the gradients of the  basis functions
-                are to be evaluated; can also be a matrix of shape (npoints,2) in which case
-                the gradient evaluations at all points are returned
+                are to be evaluated; can also be a matrix of shape (n,2) in which case
+                the gradient evaluations at all n points are returned
         """
 
     @abstractmethod
     def tabulate_dofs(self, fhat):
         """Tabulate the dofs on a given function on the reference element
 
-        :arg fhat: function fhat defined for 2d vectors
+        Returns vector F with F_ell = lambda_ell(fhat) lambda_ell the ell-th
+        degree of freedom.
+
+        :arg fhat: function fhat to be tabulated
         """
 
     @property

@@ -1,4 +1,4 @@
-"""Linear finite element"""
+"""Lagrange linear finite element"""
 
 import numpy as np
 from fem.finiteelement import FiniteElement
@@ -7,10 +7,10 @@ __all__ = ["LinearElement"]
 
 
 class LinearElement(FiniteElement):
-    """Linear finite element basis functions in 2d
+    """Linear finite element in 2d
 
-    There are 3 basis functions, which represent bi-variant linear functions on the reference
-    triangle:
+    There are 3 basis functions, which represent bi-variate linear functions on the
+    reference triangle:
 
         phi_0(x,y) = 1 - x - y
         phi_1(x,y) = x
@@ -60,30 +60,36 @@ class LinearElement(FiniteElement):
     def tabulate_dofs(self, fhat):
         """Evaluate the dofs on a given function on the reference element
 
-        :arg fhat: function fhat defined for 2d vectors
+        Returns vector F with F_ell = lambda_ell(fhat) = fhat(xi_ell) where
+        lambda_ell is the ell-th degree of freedom and xi_ell is the corresponding
+        nodal point.
+
+        :arg fhat: function fhat to be tabulated
         """
         return fhat(self._nodal_points.T)
 
     def tabulate(self, zeta):
         """Evaluate all basis functions at points inside the reference cell
 
-        Returns a vector of length 3 with the evaluation of all three basis functions.
-        If zeta is a matrix of shape (npoints,2) whose columns represent points, then
-        an array of shape (npoints,3) will be returned
+        Returns a three-dimensional vector with the evaluation of all three
+        basis functions. If zeta is a matrix of shape (n,2) whose columns represent
+        points, then an array of shape (n,3) will be returned.
 
         :arg zeta: two-dimensional point zeta at which the basis functions are to be
-                evaluated, can also be an array of shape (n,2) whose columns are the points.
+                evaluated, can also be an array of shape (n,2) whose columns are
+                the points.
         """
         return np.asarray(
             [1 - zeta[..., 0] - zeta[..., 1], zeta[..., 0], zeta[..., 1]]
         ).T
 
     def tabulate_gradient(self, zeta):
-        """Evaluate the gradients of all basis function at point inside the reference cell
+        """Evaluate the gradients of all basis function at point inside the
+        reference cell
 
-        Returns an matrux of shape (3,2) with the evaluation of the gradients of all three
-        basis functions. If zeta is a matrix of shape (npoints,2) whose columns represent points, then
-        an array of shape (npoints,3,2)
+        Returns an matrix of shape (3,2) with the evaluation of the gradients of all
+        three basis functions. If zeta is a matrix of shape (n,2) whose columns
+        represent points, then an array of shape (n,3,2) is returned.
 
         :arg zeta: two-dimensional point zeta at which the gradients of the basis
                 functions are to be evaluated, can also be an array of shape (n,2)

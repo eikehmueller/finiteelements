@@ -15,6 +15,7 @@ class Function:
         :arg label: label for this function
         """
         self.functionspace = fs
+        # Container for global dof-vector
         self.data = np.zeros(self.functionspace.ndof)
         self.label = label
 
@@ -34,6 +35,7 @@ class CoFunction:
         :arg label: label for this function
         """
         self.functionspace = fs
+        # Container for global dual vector
         self.data = np.zeros(self.functionspace.ndof)
         self.label = label
 

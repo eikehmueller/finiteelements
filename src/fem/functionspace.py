@@ -1,4 +1,7 @@
-"""Function space"""
+"""Finite element function space
+
+Function spaces are defined by a combination of a mesh and a finite element
+"""
 
 from collections.abc import Iterable
 from fem.vectorelement import VectorElement
@@ -10,6 +13,7 @@ class FunctionSpace:
     Defines association of finite element unknowns with a computational mesh.
     Each unknown has a unique global index ell_g = ell_g(alpha,ell) which is
     related to one (or more) cell with index alpha and a local index ell.
+
     Here we have that:
 
         0 <= alpha < #cells
@@ -19,7 +23,7 @@ class FunctionSpace:
                      + ndof_per_interior * #cells
 
 
-    Write n_V = ndof_per_vertex, n_F = ndof_per_facet, n_C = ndof_per_cell and
+    Let n_V = ndof_per_vertex, n_F = ndof_per_facet, n_C = ndof_per_cell and
     n_total = n_V+n_F+n_C. It is assumed that the unknowns are stored in the following
     order:
 
@@ -51,6 +55,8 @@ class FunctionSpace:
         """
         self.mesh = mesh
         self.finiteelement = finiteelement
+        # For vector-elements, each degree of freedom is associated with more than
+        # one scalar unknown. This is important when considering facet orientations.
         self.n_components = 2 if type(self.finiteelement) is VectorElement else 1
 
     @property
@@ -91,8 +97,9 @@ class FunctionSpace:
         elif entity_type == "facet":
             # dof is associated with facet
             beta = self.mesh.cell2facet[alpha][rho]
-            # check whether facet is oriented in the same direction as the local facet
-
+            # Check whether facet is oriented in the same direction as the local facet
+            # If this is not the case, we need to reverse the order in which the
+            # unknowns are accessed
             _j = (
                 j
                 if (
