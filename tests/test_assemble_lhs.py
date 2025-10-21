@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 
-from fem.utilitymeshes import RectangleMesh, TriangleMesh
+from fem.utilitymeshes import rectangle_mesh
 from fem.functionspace import FunctionSpace
 from fem.quadrature import GaussLegendreQuadratureReferenceTriangle
 from fem.assembly import assemble_lhs, assemble_lhs_sparse
@@ -15,8 +15,7 @@ def test_sparse_assembly(degree, element):
     kappa = 0.9
     omega = 0.4
     nref = 0
-    mesh = RectangleMesh(Lx=1, Ly=1, nref=nref)
-    mesh = TriangleMesh(nref=nref)
+    mesh = rectangle_mesh(Lx=1, Ly=1, nref=nref)
     fs = FunctionSpace(mesh, element)
 
     quad = GaussLegendreQuadratureReferenceTriangle(2 * degree)

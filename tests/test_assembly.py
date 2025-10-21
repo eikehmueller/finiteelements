@@ -8,7 +8,7 @@ import petsc4py
 petsc4py.init("-ksp_type preonly -pc_type lu")
 from petsc4py import PETSc
 
-from fem.utilitymeshes import RectangleMesh
+from fem.utilitymeshes import rectangle_mesh
 from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
 from fem.assembly import assemble_rhs, assemble_lhs, assemble_lhs_sparse
@@ -32,7 +32,7 @@ def test_solve(degree, element):
     # Coefficient of zero order term
     omega = 0.4
 
-    mesh = RectangleMesh(Lx=1, Ly=1, nref=nref)
+    mesh = rectangle_mesh(Lx=1, Ly=1, nref=nref)
     fs = FunctionSpace(mesh, element)
 
     quad = GaussLegendreQuadratureReferenceTriangle(degree + 1)
@@ -62,7 +62,7 @@ def test_solve_sparse(degree, element):
     # Coefficient of zero order term
     omega = 0.4
 
-    mesh = RectangleMesh(Lx=1, Ly=1, nref=nref)
+    mesh = rectangle_mesh(Lx=1, Ly=1, nref=nref)
     fs = FunctionSpace(mesh, element)
 
     quad = GaussLegendreQuadratureReferenceTriangle(degree + 1)

@@ -12,10 +12,10 @@ __all__ = ["Mesh"]
 
 
 class Mesh:
-    """Base class of a two-dimensional mesh consisting of triangular cells
+    """Class representing a two-dimensional mesh consisting of triangular cells
 
-    Stores the mesh topology in the form of adjacency maps and the mesh geometry in the form
-    of piecewise line functions.
+    Stores the mesh topology in the form of adjacency maps and the mesh geometry
+    in the form piecewise linear functions.
 
     Each mesh cell is of the following form:
 
@@ -59,12 +59,12 @@ class Mesh:
     in utilitymesh.py instead.
     """
 
-    def __init__(self):
+    def __init__(self, vertices, cell2facet, facet2vertex):
         """Initialise a new instance"""
-        self.vertices = None
-        self.cell2facet = None
-        self.facet2vertex = None
-        self.coordinates = None
+        self.vertices = vertices
+        self.cell2facet = cell2facet
+        self.facet2vertex = facet2vertex
+        self.coordinates = self._initialise_coordinates()
 
     @property
     def ncells(self):
@@ -102,9 +102,10 @@ class Mesh:
         this method needs to be called after refinement.
         """
         coord_fs = FunctionSpace(self, VectorElement(LinearElement()))
-        self.coordinates = Function(coord_fs, "coordinates")
+        coordinates = Function(coord_fs, "coordinates")
         for dim in (0, 1):
-            self.coordinates.data[dim::2] = self.vertices[:, dim]
+            coordinates.data[dim::2] = self.vertices[:, dim]
+        return coordinates
 
     def refine(self, nref=1):
         """Refine the mesh multiple times by subdividing each triangle
@@ -115,7 +116,7 @@ class Mesh:
         """
         for _ in range(nref):
             self._refine()
-        self._initialise_coordinates()
+        self.coordinates = self._initialise_coordinates()
 
     def _refine(self):
         """Refine the mesh by once subdividing each triangle

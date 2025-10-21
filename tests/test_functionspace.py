@@ -1,5 +1,5 @@
 import pytest
-from fem.utilitymeshes import RectangleMesh, TriangleMesh
+from fem.utilitymeshes import rectangle_mesh, triangle_mesh
 from fem.functionspace import FunctionSpace
 from fixtures import polynomial_element, element
 
@@ -7,7 +7,7 @@ from fixtures import polynomial_element, element
 @pytest.mark.parametrize("degree", [1, 2, 3, 4, 5])
 def test_local2global_triangle(degree, element):
     """Check that local to global indexing is correct on unrefined triangle mesh"""
-    mesh = TriangleMesh(nref=0)
+    mesh = triangle_mesh(nref=0)
     functionspace = FunctionSpace(mesh, element)
     idx = list(range(element.ndof))
     idx[3 + (degree - 1) : 3 + 2 * (degree - 1)] = idx[
@@ -18,7 +18,7 @@ def test_local2global_triangle(degree, element):
 
 def test_local2global_rectangle():
     """Check that local to global indexing is correct on unrefined rectangle mesh"""
-    mesh = RectangleMesh(nref=0)
+    mesh = rectangle_mesh(nref=0)
     element = polynomial_element(3)
     functionspace = FunctionSpace(mesh, element)
     idx = range(10)

@@ -10,7 +10,7 @@ import petsc4py
 petsc4py.init(sys.argv)
 from petsc4py import PETSc
 
-from fem.utilitymeshes import RectangleMesh
+from fem.utilitymeshes import rectangle_mesh
 from fem.linearelement import LinearElement
 from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
@@ -52,7 +52,7 @@ else:
         pass
 
 # Mesh
-mesh = RectangleMesh(Lx=1.0, Ly=1.0, nref=nref)
+mesh = rectangle_mesh(Lx=1.0, Ly=1.0, nref=nref)
 # Function space
 fs = FunctionSpace(mesh, element)
 # Quadrature rule
