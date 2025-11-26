@@ -32,7 +32,7 @@ omega = 0.4
 # Wave vector
 s = [2, 4]
 # Polynomial degree of the finite element
-degree = 3
+degree = 1
 
 # Finite element
 if degree == 1:
