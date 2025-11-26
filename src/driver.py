@@ -1,4 +1,4 @@
-"""Solve finite element model proble,m"""
+"""Solve finite element model problem"""
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -50,7 +50,7 @@ mesh = rectangle_mesh(Lx=1.0, Ly=1.0, nref=nref)
 # Function space
 fs = FunctionSpace(mesh, element)
 # Quadrature rule
-quad = GaussLegendreQuadratureReferenceTriangle(2)
+quad = GaussLegendreQuadratureReferenceTriangle(degree + 1)
 
 print(f"nref = {nref}")
 print(f"number of unknowns = {fs.ndof}")
