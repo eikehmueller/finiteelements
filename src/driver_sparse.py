@@ -1,15 +1,21 @@
-"""Solve finite element model problem"""
+"""Solve finite element model problem, using sparse matrices"""
 
 import numpy as np
 from matplotlib import pyplot as plt
 import functools
+import sys
+
+import petsc4py
+
+petsc4py.init(sys.argv)
+from petsc4py import PETSc
 
 from fem.utilitymeshes import rectangle_mesh
 from fem.linearelement import LinearElement
 from fem.functionspace import FunctionSpace
 from fem.function import Function, CoFunction
 from fem.utilities import measure_time, grid_function
-from fem.assembly import assemble_rhs, assemble_lhs
+from fem.assembly import assemble_rhs, assemble_lhs_sparse
 from fem.error import error_norm
 from fem.quadrature import GaussLegendreQuadratureReferenceTriangle
 
@@ -68,14 +74,24 @@ u_h = Function(fs, "u_numerical")
 
 # Stiffness matrix
 with measure_time("assemble stiffness matrix"):
-    stiffness_matrix = assemble_lhs(fs, quad, kappa, omega)
+    stiffness_matrix = assemble_lhs_sparse(fs, quad, kappa, omega)
 
-# Solve linear system A^{(h)} u^{(h)} = b^{(h)}
+# Solve linear system M^{(h)} u^{(h)} = b^{(h)}
 with measure_time("solve linear system"):
-    u_h.data[:] = np.linalg.solve(stiffness_matrix, b_h.data)
+    u_petsc = PETSc.Vec().createWithArray(u_h.data)
+    b_petsc = PETSc.Vec().createWithArray(b_h.data)
+    ksp = PETSc.KSP().create()
+    ksp.setOperators(stiffness_matrix)
+    ksp.setFromOptions()
+    ksp.solve(b_petsc, u_petsc)
+    niter = ksp.getIterationNumber()
 
 error_nrm = error_norm(u_h, functools.partial(f, s=s), quad)
 
+print()
+n_nz = int(stiffness_matrix.getInfo()["nz_used"])
+print(f"number of non-zero matrix entries = {n_nz}")
+print(f"number of solver iterations = {niter}")
 
 print()
 print(f"error norm = {error_nrm}")
@@ -89,13 +105,13 @@ plt.clf()
 fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(12, 8))
 for ax in axs:
     ax.set_aspect("equal")
-axs[0].set_title(r"numerical solution $u_h$")
+axs[0].set_title(r"numerical $u^{(h)}(x)$")
 cs = axs[0].contourf(X, Y, Z, levels=10, vmin=-1.2, vmax=1.2)
 cbar = plt.colorbar(cs, shrink=1, location="bottom", extend="both")
-axs[1].set_title(r"difference $u_h-u_{\text{exact}}$")
+axs[1].set_title(r"difference $u^{(h)}(x)-u_{\text{exact}}(x)$")
 cs = axs[1].contourf(X, Y, Z - Z_exact, levels=10, cmap="plasma")
 cbar = plt.colorbar(cs, shrink=1, location="bottom", extend="both")
-axs[2].set_title(r"exact solution $u_{\text{exact}}$")
+axs[2].set_title(r"exact $u_{\text{exact}}(x)$")
 cs = axs[2].contourf(X, Y, Z_exact, levels=10, vmin=-1.2, vmax=1.2)
 cbar = plt.colorbar(cs, shrink=1, location="bottom", extend="both")
 plt.savefig("solution.png", bbox_inches="tight", dpi=300)
