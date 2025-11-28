@@ -38,7 +38,7 @@ omega = 0.4
 # Wave vector
 s = [2, 4]
 # Polynomial degree of the finite element
-degree = 3
+degree = 1
 
 # Finite element
 if degree == 1:
@@ -81,7 +81,7 @@ with measure_time("assemble stiffness matrix"):
     else:
         stiffness_matrix = assemble_lhs(fs, quad, kappa, omega)
 
-# Solve linear system M^{(h)} u^{(h)} = b^{(h)}
+# Solve linear system A^{(h)} u^{(h)} = b^{(h)}
 with measure_time("solve linear system"):
     if sparse_matrices:
         u_petsc = PETSc.Vec().createWithArray(u_h.data)
@@ -114,13 +114,13 @@ plt.clf()
 fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(12, 8))
 for ax in axs:
     ax.set_aspect("equal")
-axs[0].set_title(r"numerical $u^{(h)}(x)$")
+axs[0].set_title(r"numerical solution $u_h$")
 cs = axs[0].contourf(X, Y, Z, levels=10, vmin=-1.2, vmax=1.2)
 cbar = plt.colorbar(cs, shrink=1, location="bottom", extend="both")
-axs[1].set_title(r"difference $u^{(h)}(x)-u_{\text{exact}}(x)$")
+axs[1].set_title(r"difference $u_h-u_{\text{exact}}$")
 cs = axs[1].contourf(X, Y, Z - Z_exact, levels=10, cmap="plasma")
 cbar = plt.colorbar(cs, shrink=1, location="bottom", extend="both")
-axs[2].set_title(r"exact $u_{\text{exact}}(x)$")
+axs[2].set_title(r"exact solution $u_{\text{exact}}$")
 cs = axs[2].contourf(X, Y, Z_exact, levels=10, vmin=-1.2, vmax=1.2)
 cbar = plt.colorbar(cs, shrink=1, location="bottom", extend="both")
 plt.savefig("solution.png", bbox_inches="tight", dpi=300)
