@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools >= 80.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "finiteelements"
+version = "1.0"
+dependencies = [
+    "numpy",
+    "matplotlib",
+    "nbconvert",
+]
+requires-python = ">=3.12"
+authors = [
+  {name = "Eike Mueller", email = "e.mueller@bath.ac.uk"},
+]
+maintainers = [
+  {name = "Eike Mueller", email = "e.mueller@bath.ac.uk"},
+]
+description = "Implementation of the finite element method in two dimensions."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["finite elements","partial differential equations"]
+classifiers = [
+    "Programming Language :: Python :: 3"
+]
+[project.urls]
+Homepage = "https://eikehmueller.github.io/ma32070/"
+Repository = "https://github.com/eikehmueller/finiteelements"
